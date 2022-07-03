@@ -12,3 +12,4 @@ spring:
           search-paths: secrets
           username: bhavanichandra
           password: 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
+          default-label: main
