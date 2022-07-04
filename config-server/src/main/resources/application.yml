@@ -11,5 +11,11 @@ spring:
           uri: https://github.com/bhavanichandra/exl_hackathon
           search-paths: secrets
           username: bhavanichandra
-          password: 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
+          password: "{cipher}AQBv4daQHuFs9mFitu9QxGYyIVko0+oAXcHsBm96i6JByHFKggHn1hRp0LmnJr6/HLpGXI2x7TsK0MU7YYACXSHT3FcqPx+Q5J7x5DJ75sf2zrKjcFxh+A6PMmE24fdu4EGfzLBswmJzIlpdxXIBL8KsLsmsCGpyzGN2UN+aK9OmMoGiQe7csO36JgLEQ8uZJdFxyqt4qniVubFBT+aku1uQdLNGDHuoZdaxGpWKJSiq39iVyhsI5os5dNkrlpUeiwPcvHOjOFLl2cI1QcPzJDjdMdEKITFjDzdUGDjVGOZic9Ja6qK0JbqiFw1j4xYMmm4+8K8jfvc+wU5O4zkpfrjkHSzZyh2m+SlNXcsjJ72z6BtfS2YPRlImodG3MVGOJGhgdWcA1AfVLSfvlEZxDoUqz419zvjsfXYqf2KDMflgzQ=="
           default-label: main
+
+encrypt:
+  keystore:
+    location: classpath:configserver.jks
+    password: md3v3l0p3r
+    alias: config
