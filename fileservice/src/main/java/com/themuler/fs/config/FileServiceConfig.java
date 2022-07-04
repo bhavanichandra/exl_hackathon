@@ -17,7 +17,7 @@ import org.springframework.messaging.MessageChannel;
 @RequiredArgsConstructor
 public class FileServiceConfig {
 
-  private final AmazonS3 amazonS3;
+//  private final AmazonS3 amazonS3;
 
 
   @Bean

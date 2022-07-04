@@ -25,7 +25,7 @@ public class ClientConfig {
 
   private String property_value;
 
-  @ManyToOne(cascade = CascadeType.ALL)
-  private Client client;
+  @ManyToOne
+  private ClientMetadata metadata;
 
 }

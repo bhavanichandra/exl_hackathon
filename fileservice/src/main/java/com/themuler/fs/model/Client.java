@@ -29,7 +29,7 @@ public class Client {
   private Boolean is_active;
 
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
-  private List<ClientConfig> configs;
+  private List<ClientMetadata> clientMetadataList;
 
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
   private List<User> users;

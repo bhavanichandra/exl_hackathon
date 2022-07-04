@@ -17,7 +17,7 @@ public class ClientMetadata {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @OneToMany
+  @OneToMany(mappedBy = "metadata")
   private List<ClientConfig> clientConfigs;
 
   private String environment;

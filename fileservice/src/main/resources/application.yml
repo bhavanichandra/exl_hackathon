@@ -7,7 +7,10 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
-
+  cloud:
+    gcp:
+      storage:
+        enabled: false
 management:
   endpoints:
     web:
