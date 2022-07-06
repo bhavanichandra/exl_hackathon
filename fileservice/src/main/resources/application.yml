@@ -1,16 +1,19 @@
 spring:
   application:
     name: file-service
+
   config:
     import: "configserver:"
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
-  cloud:
-    gcp:
-      storage:
-        enabled: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 1GB
+      max-request-size: 1GB
+
 management:
   endpoints:
     web:
