@@ -21,13 +21,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
-@RestController
+//@RestController
 @RequiredArgsConstructor
 public class FileServiceController {
 
   private final FileServiceMessageGateway fileServiceMessageGateway;
 
-  @GetMapping(path = "/health")
+//  @GetMapping(path = "/health")
   public ResponseEntity<String> healthCheck() {
     var message =
         MessageBuilder.withPayload("Hello World").setHeader("operation", "health").build();
@@ -35,9 +35,9 @@ public class FileServiceController {
     return ResponseEntity.ok((String) response);
   }
 
-  @PostMapping(
-      path = "/upload",
-      consumes = {"multipart/form-data"})
+//  @PostMapping(
+//      path = "/upload",
+//      consumes = {"multipart/form-data"})
   public ResponseEntity<?> uploadToAws(@RequestPart(name = "file") MultipartFile filePart)
       throws IOException {
     String contentType = filePart.getContentType();
