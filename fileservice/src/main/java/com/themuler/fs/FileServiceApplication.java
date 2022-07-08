@@ -17,6 +17,8 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.http.config.EnableIntegrationGraphController;
+import org.springframework.integration.http.inbound.HttpRequestHandlingMessagingGateway;
+import org.springframework.integration.http.inbound.RequestMapping;
 import org.springframework.integration.stream.ByteStreamReadingMessageSource;
 import org.springframework.integration.webflux.dsl.WebFlux;
 import org.springframework.messaging.MessageChannel;
@@ -67,34 +69,36 @@ class AwsClient implements AutoCloseable {
 
 @EnableIntegrationGraphController
 @RequiredArgsConstructor
-class Configure {
+class Uploader {
 
   private final AwsClient awsClient;
 
   @Bean
-  public MessageChannel testStreamChannel() {
+  public MessageChannel inputChannel(){
+    return MessageChannels.direct().get();
+  }
+  @Bean
+  public MessageChannel requestChannel() {
     return MessageChannels.flux().get();
   }
 
-  public ByteStreamReadingMessageSource messageSource(InputStream stream) {
-    return new ByteStreamReadingMessageSource(stream);
-  }
 
-  @ServiceActivator
-  public String testHandler(Object object) {
-    System.out.println(object);
-    return "Done";
+  @Bean
+  public HttpRequestHandlingMessagingGateway httpGateway() {
+    HttpRequestHandlingMessagingGateway gateway = new HttpRequestHandlingMessagingGateway(true);
+    RequestMapping mapping = new RequestMapping();
+    mapping.setMethods(HttpMethod.POST);
+    mapping.setPathPatterns("/test");
+    gateway.setRequestMapping(mapping);
+    gateway.setRequestChannel(requestChannel());
+    gateway.setRequestPayloadTypeClass(byte[].class);
+    return gateway;
   }
 
   @Bean
-  public MessageChannel streamingChannel() {
-    return MessageChannels.flux().get();
-  }
-
-  @Bean
-  public IntegrationFlow testFlow() {
+  public IntegrationFlow httpInboundFlow() {
     return IntegrationFlows.from(
-            WebFlux.inboundGateway("/load")
+            WebFlux.inboundChannelAdapter("/load")
                 .requestMapping(req -> req.methods(HttpMethod.GET, HttpMethod.POST))
                 .requestPayloadType(ResolvableType.forClassWithGenerics(Flux.class, FilePart.class))
                 .requestChannel("streamingChannel"))
