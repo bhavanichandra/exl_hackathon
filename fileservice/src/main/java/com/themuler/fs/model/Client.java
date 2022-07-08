@@ -1,15 +1,11 @@
 package com.themuler.fs.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.List;
 
 @Data
@@ -26,11 +22,11 @@ public class Client {
 
   private String description;
 
-  private Boolean is_active;
-
-  @OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
-  private List<ClientMetadata> clientMetadataList;
-
+  @JsonIgnore
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
   private List<User> users;
+
+  @JsonIgnore
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "client")
+  private List<ClientConfig> clientConfigs;
 }

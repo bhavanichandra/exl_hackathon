@@ -105,11 +105,12 @@ public class FileServiceIntegrationConfig {
                                       .toBuilder()
                                       .build();
                               if (putObjectResponse == null) {
-                                return "Failed";
+                                return ResponseEntity.status(500).body("Failed");
                               }
                               System.out.println(putObjectResponse);
                               VirtualFileSystem vfs = new VirtualFileSystem();
                               vfs.setCloud_unique_identifier(key);
+//                              vfs.setCloud_location(putObjectResponse.);
                               var aws = cloudPlatformRepository.findByName("aws").get();
                               vfs.setCloudPlatform(aws);
                               vfs.setType("File");

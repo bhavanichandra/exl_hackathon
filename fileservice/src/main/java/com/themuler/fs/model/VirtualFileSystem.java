@@ -19,6 +19,8 @@ public class VirtualFileSystem {
 
   private String cloud_unique_identifier;
 
+  private String cloud_location;
+
   private String type;
 
   private String path;
