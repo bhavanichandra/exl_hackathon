@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @RestController
+@RequestMapping(path = "/api")
 @RequiredArgsConstructor
 public class FileServiceController {
 

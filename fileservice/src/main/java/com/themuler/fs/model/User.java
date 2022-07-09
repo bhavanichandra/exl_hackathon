@@ -26,9 +26,9 @@ public class User {
 
   private Boolean is_active;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.EAGER)
   private Client client;
 
-  @OneToOne
+  @OneToOne(fetch = FetchType.EAGER)
   private Role role;
 }

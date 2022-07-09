@@ -1,9 +1,11 @@
 package com.themuler.fs.model;
 
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.util.Map;
@@ -12,6 +14,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "client_config")
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 public class ClientConfig {
 
   @Id
@@ -25,5 +28,6 @@ public class ClientConfig {
   @OneToOne private CloudPlatform cloudPlatform;
 
   @Type(type = "jsonb")
+  @Column(name = "credential", columnDefinition = "jsonb")
   private Map<String, Object> credential;
 }
