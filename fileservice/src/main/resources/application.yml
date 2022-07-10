@@ -5,9 +5,9 @@ spring:
   config:
     import: "configserver:"
   jpa:
-    show-sql: true
     hibernate:
       ddl-auto: update
+    open-in-view: false
   servlet:
     multipart:
       enabled: true
