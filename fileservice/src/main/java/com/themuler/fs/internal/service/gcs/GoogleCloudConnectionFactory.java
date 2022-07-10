@@ -22,7 +22,7 @@ public class GoogleCloudConnectionFactory {
     List<Map<String, Object>> credentials =
         this.credentialsService.getCredentialsFromConfiguration(env);
     return credentials.stream()
-        .filter(each -> each.get("cloud").equals("gcs"))
+        .filter(each -> each.get("cloud").equals("gcp"))
         .collect(Collectors.toList())
         .get(0);
   }
