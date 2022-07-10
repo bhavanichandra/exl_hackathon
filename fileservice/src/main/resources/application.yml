@@ -21,4 +21,8 @@ management:
       exposure:
         include: "*"
 
-
+environment: dev
+download:
+  link:
+    active:
+      time: 10

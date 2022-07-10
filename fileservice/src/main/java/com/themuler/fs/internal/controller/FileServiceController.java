@@ -1,10 +1,12 @@
 package com.themuler.fs.internal.controller;
 
+import com.themuler.fs.api.DownloadAPIRequest;
 import com.themuler.fs.api.Feature;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.gateway.FileServiceMessageGateway;
 import com.themuler.fs.internal.model.User;
-import com.themuler.fs.internal.service.AccessInterface;
+import com.themuler.fs.internal.service.IntegrationServiceInterface;
+import com.themuler.fs.internal.service.auth.AccessInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.support.MessageBuilder;
@@ -15,8 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
-
-import static com.themuler.fs.api.Feature.GET_ALL_USER;
 
 @RestController
 @RequestMapping(path = "/api")
@@ -39,7 +39,8 @@ public class FileServiceController {
       path = "/upload",
       consumes = {"multipart/form-data"},
       produces = {"application/json"})
-  public ResponseEntity<?> uploadToAws(@RequestPart(name = "file") MultipartFile filePart)
+  public ResponseEntity<?> upload(
+      @RequestPart(name = "file") MultipartFile filePart, @RequestPart(name = "cloud") String cloud)
       throws IOException {
 
     boolean allowAccess =
@@ -68,8 +69,36 @@ public class FileServiceController {
       var message =
           MessageBuilder.withPayload(map)
               .setHeader("operation", "upload")
-              .setHeader("cloud", "aws")
+              .setHeader("cloud", cloud)
               .build();
+      var response = this.fileServiceMessageGateway.send(message);
+      return ResponseEntity.ok(response);
+    } catch (Exception ex) {
+      return ResponseEntity.ok("Failed: " + ex.getMessage());
+    }
+  }
+
+  @PostMapping(
+      path = "/download",
+      consumes = {"application/json"},
+      produces = {"application/json"})
+  public ResponseEntity<?> download(@RequestBody DownloadAPIRequest request) {
+
+    boolean allowAccess =
+        this.accessInterface.allowAccess(Feature.ANY_FILE_DOWNLOAD)
+            || this.accessInterface.allowAccess(Feature.USER_SPECIFIC_FILE_DOWNLOAD)
+            || this.accessInterface.allowAccess(Feature.CLIENT_SPECIFIC_FILE_DOWNLOAD);
+    if (!allowAccess) {
+      return ResponseEntity.status(403)
+          .body(
+              ResponseWrapper.<List<User>>builder()
+                  .payload(null)
+                  .success(false)
+                  .message("Unauthorized Access")
+                  .build());
+    }
+    try {
+      var message = MessageBuilder.withPayload(request).setHeader("operation", "download").build();
       var response = this.fileServiceMessageGateway.send(message);
       return ResponseEntity.ok(response);
     } catch (Exception ex) {

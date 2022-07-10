@@ -1,4 +1,4 @@
-package com.themuler.fs.internal.service;
+package com.themuler.fs.internal.service.auth;
 
 import com.themuler.fs.api.UserRole;
 import com.themuler.fs.internal.model.User;
@@ -32,7 +32,7 @@ public class AppUserDetailsService implements UserDetailsService {
   }
 
   @RequiredArgsConstructor
-  static class AppUserDetails implements UserDetails {
+  public static class AppUserDetails implements UserDetails {
 
     private final User user;
 

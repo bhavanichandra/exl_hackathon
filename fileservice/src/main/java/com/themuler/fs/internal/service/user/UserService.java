@@ -1,4 +1,4 @@
-package com.themuler.fs.internal.service;
+package com.themuler.fs.internal.service.user;
 
 import com.themuler.fs.api.NewUser;
 import com.themuler.fs.internal.repository.ClientRepository;

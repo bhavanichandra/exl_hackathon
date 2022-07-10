@@ -1,5 +1,6 @@
 package com.themuler.fs.internal.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,11 @@ public class VirtualFileSystem {
   private String path;
 
   private String fileName;
+
+  @Column(name = "saved_bucket_name")
+  private String savedBucketName;
+
+  private String environment;
 
   @ManyToOne
   private CloudPlatform cloudPlatform;

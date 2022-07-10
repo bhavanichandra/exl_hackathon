@@ -30,4 +30,6 @@ public class ClientConfig {
   @Type(type = "jsonb")
   @Column(name = "credential", columnDefinition = "jsonb")
   private Map<String, Object> credential;
+
+
 }

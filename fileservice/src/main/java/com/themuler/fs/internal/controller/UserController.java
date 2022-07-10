@@ -1,10 +1,10 @@
 package com.themuler.fs.internal.controller;
 
 import com.themuler.fs.api.NewUser;
-import com.themuler.fs.internal.service.AccessInterface;
+import com.themuler.fs.internal.service.auth.AccessInterface;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.model.User;
-import com.themuler.fs.internal.service.UserService;
+import com.themuler.fs.internal.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

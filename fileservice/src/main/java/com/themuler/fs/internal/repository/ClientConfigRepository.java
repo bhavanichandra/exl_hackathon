@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface ClientConfigRepository extends CrudRepository<ClientConfig, Long> {
 
   Iterable<ClientConfig> findByClientAndCloudPlatform(Client client, CloudPlatform cloudPlatform);
+
+  Iterable<ClientConfig> findAllByClient(Client client);
 }
