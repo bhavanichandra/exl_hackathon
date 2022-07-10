@@ -11,7 +11,7 @@ spring:
           uri: https://github.com/bhavanichandra/exl_hackathon
           search-paths: secrets
           username: bhavanichandra
-          password: "{cipher}AQBv4daQHuFs9mFitu9QxGYyIVko0+oAXcHsBm96i6JByHFKggHn1hRp0LmnJr6/HLpGXI2x7TsK0MU7YYACXSHT3FcqPx+Q5J7x5DJ75sf2zrKjcFxh+A6PMmE24fdu4EGfzLBswmJzIlpdxXIBL8KsLsmsCGpyzGN2UN+aK9OmMoGiQe7csO36JgLEQ8uZJdFxyqt4qniVubFBT+aku1uQdLNGDHuoZdaxGpWKJSiq39iVyhsI5os5dNkrlpUeiwPcvHOjOFLl2cI1QcPzJDjdMdEKITFjDzdUGDjVGOZic9Ja6qK0JbqiFw1j4xYMmm4+8K8jfvc+wU5O4zkpfrjkHSzZyh2m+SlNXcsjJ72z6BtfS2YPRlImodG3MVGOJGhgdWcA1AfVLSfvlEZxDoUqz419zvjsfXYqf2KDMflgzQ=="
+          password: "{cipher}AQCGb+rE4pH/m613gN1Ke68r8QQX+Jxp1Rl8Yy2npK+J/O08rw6wR4nKzb7D5a/asY3IrRSc6qJ1JhsebwAgJUnX/+3x3BszDtK62ahqEisemxR/lxuhe2W8v7LRQzhXUwiE3zBXMFn1LA6EzusQUcV31CPvL3rMWDRkmEDvIXea51AAnMx+J77gNuL2nuuJYPLitNPQ7SFrXs7MN3XmIXBokarWsX721s1iA8XqJzhaLMtISzg68Aila+j7pu5RY4tssyxMduDu2heWY0SmOeTzz1VEAedk+qfJlsOPne6vCtgkXjHGkvWqAuW6cFyDCMR4FvF/hc8TKrFVJnbQInFH2nd2+9SiYbZTW7nIi5e1AtPyQxRUglpiXfFz1JwJjOBBTPPQ81XdK3PSW1xeQK3ghR05lgjJ1x5isrCGi1icQg=="
           default-label: main
 
 encrypt:
