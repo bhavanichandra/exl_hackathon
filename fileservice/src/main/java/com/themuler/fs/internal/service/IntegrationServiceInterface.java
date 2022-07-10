@@ -11,5 +11,5 @@ public interface IntegrationServiceInterface {
   Message<String> getDownloadLocation(DownloadAPIRequest request);
   Object downloadFromAws(Message<String> message);
 
-  Object getToken();
+  Object azureCredentials();
 }

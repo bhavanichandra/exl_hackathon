@@ -26,3 +26,9 @@ download:
   link:
     active:
       time: 10
+azure:
+  api:
+    base:
+      url: "https://azure1poc2.blob.core.windows.net"
+  token:
+    url: "https://login.microsoftonline.com"

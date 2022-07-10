@@ -9,5 +9,4 @@ import org.springframework.web.client.RestTemplate;
 public class GoogleCloudConnectionFactory {
   public static final String GCS_TOKEN_URL = "";
   private static final String GCS_API_URL = "";
-  private final RestTemplate restTemplate;
 }

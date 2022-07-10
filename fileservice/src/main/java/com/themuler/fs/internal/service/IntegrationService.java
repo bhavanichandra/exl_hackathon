@@ -97,6 +97,7 @@ public class IntegrationService implements IntegrationServiceInterface {
         .setHeader("path", vfs.getPath())
         .setHeader("fileName", vfs.getFileName())
         .setHeader("bucketName", vfs.getSavedBucketName())
+        .setHeader("vfsId", vfs.getId())
         .build();
   }
 
@@ -123,11 +124,13 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object getToken() {
+  public Object azureCredentials() {
+    Map<String, Object> azureCredentials = this.azureConnectionFactory.getAzureCredentials();
+
     return ResponseWrapper.builder()
         .message("Success")
         .success(true)
-        .payload(this.azureConnectionFactory.getAzureToken())
+        .payload(azureCredentials)
         .build();
   }
 }
