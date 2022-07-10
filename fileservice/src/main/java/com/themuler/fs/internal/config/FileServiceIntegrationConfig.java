@@ -1,6 +1,7 @@
 package com.themuler.fs.internal.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.model.VirtualFileSystem;
 import com.themuler.fs.internal.repository.CloudPlatformRepository;
 import com.themuler.fs.internal.repository.VFSRepository;
@@ -20,6 +21,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
@@ -36,8 +38,6 @@ public class FileServiceIntegrationConfig {
   public ObjectMapper objectMapper() {
     return new ObjectMapper();
   }
-
-
 
   @Bean
   public MessageChannel healthCheck() {
@@ -83,10 +83,17 @@ public class FileServiceIntegrationConfig {
                     awsFlow ->
                         awsFlow.transform(
                             m -> {
+                              VirtualFileSystem vfs = new VirtualFileSystem();
+                              vfs.setStatus("in_progress");
+                              var aws = cloudPlatformRepository.findByName("aws").get();
+                              vfs.setCloudPlatform(aws);
+                              vfs.setType("File");
+                              vfs.setParent(null);
                               var s3 = awsClient.getS3Client();
                               var bucketName = "exl-hackthon";
                               var message = (Map<String, Object>) m;
                               String fileName = (String) message.get("fileName");
+                              vfs.setFileName(fileName);
                               long contentLength = (Long) message.get("size");
                               String contentType = (String) message.get("contentType");
                               InputStream inputStream =
@@ -105,18 +112,22 @@ public class FileServiceIntegrationConfig {
                                       .toBuilder()
                                       .build();
                               if (putObjectResponse == null) {
-                                return ResponseEntity.status(500).body("Failed");
+                                vfs.setStatus("failed");
+                                vfsRepository.save(vfs);
+                                log.info("Failed to upload");
+                                return ResponseWrapper.<Map<String, Object>>builder()
+                                    .payload(null)
+                                    .success(false)
+                                    .message("Upload Failed");
                               }
-                              System.out.println(putObjectResponse);
-                              VirtualFileSystem vfs = new VirtualFileSystem();
-                              vfs.setCloud_unique_identifier(key);
-//                              vfs.setCloud_location(putObjectResponse.);
-                              var aws = cloudPlatformRepository.findByName("aws").get();
-                              vfs.setCloudPlatform(aws);
-                              vfs.setType("File");
-                              vfs.setParent(null);
+                              vfs.setPath(key);
+                              vfs.setStatus("uploaded");
                               VirtualFileSystem savedVFS = vfsRepository.save(vfs);
-                              return ResponseEntity.ok(savedVFS);
+                              log.info("Uploaded to aws");
+                              return ResponseWrapper.<VirtualFileSystem>builder()
+                                  .payload(savedVFS)
+                                  .success(true)
+                                  .message("Uploaded successfully").build();
                             })))
         .get();
   }

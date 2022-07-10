@@ -17,13 +17,13 @@ public class VirtualFileSystem {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  private String cloud_unique_identifier;
-
-  private String cloud_location;
+  private String status;
 
   private String type;
 
   private String path;
+
+  private String fileName;
 
   @ManyToOne
   private CloudPlatform cloudPlatform;

@@ -77,8 +77,11 @@ public class AppUserDetailsService implements UserDetailsService {
     }
 
     public String currentUserRole() {
-      //      return this.repo.findByEmail(this.user.getEmail()).getRole().getName();
       return user.getRole().getName();
+    }
+
+    public User getUser() {
+      return user;
     }
   }
 }
