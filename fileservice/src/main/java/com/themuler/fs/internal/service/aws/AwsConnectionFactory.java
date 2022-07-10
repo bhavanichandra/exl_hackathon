@@ -28,6 +28,8 @@ public class AwsConnectionFactory implements AwsCredentialsProvider {
 
   private final CredentialsService credentialsService;
 
+  private Map<String,Object> credential;
+
   @Value("${environment}")
   private String environment;
 
@@ -40,7 +42,12 @@ public class AwsConnectionFactory implements AwsCredentialsProvider {
             .filter(each -> each.get("cloud").equals("aws"))
             .collect(Collectors.toList())
             .get(0);
+    this.credential = credential;
     return AwsBasicCredentials.create(
         (String) credential.get("client_id"), (String) credential.get("client_secret"));
+  }
+
+  public Map<String, Object> getCredential() {
+    return credential;
   }
 }

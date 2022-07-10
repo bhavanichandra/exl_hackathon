@@ -98,7 +98,9 @@ public class FileServiceController {
                   .build());
     }
     try {
-      var message = MessageBuilder.withPayload(request).setHeader("operation", "download").build();
+      var message = MessageBuilder.withPayload(request)
+              .setHeader("operation", "download")
+              .build();
       var response = this.fileServiceMessageGateway.send(message);
       return ResponseEntity.ok(response);
     } catch (Exception ex) {
