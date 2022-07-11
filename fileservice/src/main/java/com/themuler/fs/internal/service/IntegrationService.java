@@ -10,8 +10,10 @@ import com.azure.storage.blob.options.BlobParallelUploadOptions;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.storage.StorageScopes;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.*;
+import com.google.cloud.storage.spi.v1.StorageRpc;
 import com.themuler.fs.api.DownloadAPIRequest;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.model.VirtualFileSystem;
@@ -39,6 +41,7 @@ import java.io.*;
 import java.net.http.HttpClient;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
@@ -222,8 +225,10 @@ public class IntegrationService implements IntegrationServiceInterface {
     Storage storage =
         StorageOptions.newBuilder().setCredentials(serviceAccountCredentials).build().getService();
     Blob blob = storage.get(BlobId.of(bucket, fileName));
-    return ResponseWrapper.<Blob>builder()
-        .payload(blob)
+
+    byte[] content = blob.getContent(Blob.BlobSourceOption.shouldReturnRawInputStream(true));
+    return ResponseWrapper.<String>builder()
+        .payload(new String(content))
         .success(true)
         .message("Download Success")
         .build();
@@ -251,15 +256,15 @@ public class IntegrationService implements IntegrationServiceInterface {
         new BlobClientBuilder().endpoint(url).connectionString(connection_string).buildClient();
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
       blobClient.downloadStream(outputStream);
-      return ResponseWrapper.<OutputStream>builder()
-          .payload(outputStream)
+      return ResponseWrapper.<String>builder()
+          .payload(outputStream.toString(UTF_8))
           .success(true)
-          .message("Download Success!");
+          .message("Download Success!").build();
     } catch (IOException e) {
-      return ResponseWrapper.<OutputStream>builder()
+      return ResponseWrapper.<String>builder()
           .payload(null)
           .success(false)
-          .message(e.getMessage());
+          .message(e.getMessage()).build();
     }
   }
 
@@ -272,6 +277,7 @@ public class IntegrationService implements IntegrationServiceInterface {
     String default_bucket_name = (String) credential.get("default_bucket_name");
     String contentType = (String) payload.get("contentType");
     VirtualFileSystem vfs = new VirtualFileSystem();
+    vfs.setType("file");
     vfs.setSavedBucketName(default_bucket_name);
     vfs.setCloudPlatform(cloudPlatformRepository.findByName("gcp").get());
     vfs.setStatus("in_progress");
@@ -300,10 +306,8 @@ public class IntegrationService implements IntegrationServiceInterface {
       final byte[] bytes;
       bytes = fileInputStream.readAllBytes();
       Blob blob = storage.create(blobInfo, bytes);
-      log.info("Blob Data: {}", blob);
       if (blob != null) {
         byte[] prevContent = blob.getContent();
-        System.out.println(new String(prevContent, UTF_8));
         WritableByteChannel channel = blob.writer();
         channel.write(ByteBuffer.wrap(bytes));
         channel.close();
@@ -318,6 +322,7 @@ public class IntegrationService implements IntegrationServiceInterface {
           .message("Upload Failed")
           .build();
     }
+    vfsRepository.save(vfs);
     return ResponseWrapper.<VirtualFileSystem>builder()
         .payload(vfs)
         .success(true)

@@ -58,6 +58,15 @@ public class FileServiceController {
     }
     String contentType = filePart.getContentType();
     long size = filePart.getSize();
+    if (size <= 0) {
+      return ResponseEntity.status(403)
+          .body(
+              ResponseWrapper.<Object>builder()
+                  .payload(null)
+                  .success(false)
+                  .message("Please select a file to start uploading")
+                  .build());
+    }
     String name = filePart.getOriginalFilename();
     InputStream inputStream = filePart.getInputStream();
     var map = new HashMap<String, Object>();
@@ -98,12 +107,11 @@ public class FileServiceController {
                   .build());
     }
     try {
-      var message = MessageBuilder.withPayload(request)
-              .setHeader("operation", "download")
-              .build();
+      var message = MessageBuilder.withPayload(request).setHeader("operation", "download").build();
       var response = this.fileServiceMessageGateway.send(message);
       return ResponseEntity.ok(response);
     } catch (Exception ex) {
+      ex.printStackTrace();
       return ResponseEntity.ok("Failed: " + ex.getMessage());
     }
   }
