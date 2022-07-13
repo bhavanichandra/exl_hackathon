@@ -108,8 +108,7 @@ public class FileServiceController {
     }
     try {
       var message = MessageBuilder.withPayload(request).setHeader("operation", "download").build();
-      var response = this.fileServiceMessageGateway.send(message);
-      return ResponseEntity.ok(response);
+      return (ResponseEntity<Object>) this.fileServiceMessageGateway.send(message);
     } catch (Exception ex) {
       ex.printStackTrace();
       return ResponseEntity.ok("Failed: " + ex.getMessage());

@@ -5,6 +5,7 @@ import com.azure.core.util.BinaryData;
 import com.azure.core.util.Context;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobClientBuilder;
+import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlockBlobItem;
 import com.azure.storage.blob.options.BlobParallelUploadOptions;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,13 +26,18 @@ import com.themuler.fs.internal.service.gcs.GoogleCloudConnectionFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -138,21 +144,28 @@ public class IntegrationService implements IntegrationServiceInterface {
     MessageHeaders headers = message.getHeaders();
     String path = headers.get("path", String.class);
     String bucket = headers.get("bucketName", String.class);
-    var s3 = awsClient.getS3Presigner();
-    GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucket).key(path).build();
-    GetObjectPresignRequest getObjectPresignRequest =
-        GetObjectPresignRequest.builder()
-            .signatureDuration(Duration.ofMinutes(durationInMinutes))
-            .getObjectRequest(getObjectRequest)
-            .build();
-    PresignedGetObjectRequest presignedGetObjectRequest =
-        s3.presignGetObject(getObjectPresignRequest);
+    var s3Client = awsClient.getS3Client();
+    try {
+      ResponseInputStream<GetObjectResponse> respIO =
+          s3Client.getObject(GetObjectRequest.builder().bucket(bucket).key(path).build());
+      ByteArrayOutputStream fileOut = new ByteArrayOutputStream();
+      long l = respIO.transferTo(fileOut);
+      GetObjectResponse response = respIO.response();
+      return ResponseEntity.ok()
+          .contentType(MediaType.parseMediaType(response.contentType()))
+          .contentLength(l)
+          .header(HttpHeaders.CONTENT_DISPOSITION, response.contentDisposition())
+          .body(fileOut.toByteArray());
 
-    return ResponseWrapper.builder()
-        .message("Navigate to open url. Valid for 10 mins or configured time")
-        .success(true)
-        .payload(Map.of("url", presignedGetObjectRequest.url()))
-        .build();
+    } catch (Exception ex) {
+      return ResponseEntity.internalServerError()
+          .body(
+              ResponseWrapper.builder()
+                  .message("Error Downloading file.")
+                  .success(true)
+                  .payload(Map.of("message", ex.getMessage()))
+                  .build());
+    }
   }
 
   @Override
@@ -208,7 +221,6 @@ public class IntegrationService implements IntegrationServiceInterface {
   public Object downloadFromGcp(Message<?> message) throws IOException {
     MessageHeaders headers = message.getHeaders();
     Map<String, Object> credential = this.googleCloudConnectionFactory.getGCSCredentials();
-    String path = headers.get("path", String.class);
     String bucket = headers.get("bucketName", String.class);
     String fileName = headers.get("fileName", String.class);
     String clientId = (String) credential.get("client_id");
@@ -224,20 +236,35 @@ public class IntegrationService implements IntegrationServiceInterface {
             Collections.singletonList(StorageScopes.DEVSTORAGE_FULL_CONTROL));
     Storage storage =
         StorageOptions.newBuilder().setCredentials(serviceAccountCredentials).build().getService();
-    Blob blob = storage.get(BlobId.of(bucket, fileName));
-
-    byte[] content = blob.getContent(Blob.BlobSourceOption.shouldReturnRawInputStream(true));
-    return ResponseWrapper.<String>builder()
-        .payload(new String(content))
-        .success(true)
-        .message("Download Success")
-        .build();
+    if (bucket != null && fileName != null) {
+      Blob blob = storage.get(BlobId.of(bucket, fileName));
+      String contentDisposition = blob.getContentDisposition();
+      String contentType = blob.getContentType();
+      if(contentDisposition == null) {
+        contentDisposition = "attachment; filename=" + fileName;
+      }
+      log.info("Content Type: {}, Content Disposition: {}", contentType, contentDisposition);
+      byte[] content = blob.getContent(Blob.BlobSourceOption.shouldReturnRawInputStream(true));
+      return ResponseEntity.ok()
+          .contentType(MediaType.parseMediaType(contentType))
+          .contentLength(blob.getSize())
+          .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+          .body(content);
+    } else {
+      return ResponseEntity.badRequest()
+          .body(
+              ResponseWrapper.builder()
+                  .payload(Map.of("message", "Either bucket or filename is null"))
+                  .success(false)
+                  .message("Error Downloading file")
+                  .build());
+    }
   }
 
   @Override
   public Object downloadFromAzure(Message<?> message) {
     MessageHeaders headers = message.getHeaders();
-
+    String fileName = headers.get("fileName", String.class);
     String path = headers.get("path", String.class);
     Map<String, Object> credential = this.azureConnectionFactory.getAzureCredentials();
     String accountName = (String) credential.get("storage_account");
@@ -256,15 +283,26 @@ public class IntegrationService implements IntegrationServiceInterface {
         new BlobClientBuilder().endpoint(url).connectionString(connection_string).buildClient();
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
       blobClient.downloadStream(outputStream);
-      return ResponseWrapper.<String>builder()
-          .payload(outputStream.toString(UTF_8))
-          .success(true)
-          .message("Download Success!").build();
+      BlobProperties properties = blobClient.getProperties();
+      String blobContentType = properties.getContentType();
+      String contentDisposition = properties.getContentDisposition();
+      if(contentDisposition == null) {
+        contentDisposition = "attachment; filename=" + fileName;
+      }
+      log.info("Content Type: {}, Content Disposition: {}", blobContentType, contentDisposition);
+      return ResponseEntity.ok()
+          .contentType(MediaType.parseMediaType(blobContentType))
+          .contentLength(properties.getBlobSize())
+          .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+          .body(outputStream.toByteArray());
     } catch (IOException e) {
-      return ResponseWrapper.<String>builder()
-          .payload(null)
-          .success(false)
-          .message(e.getMessage()).build();
+      return ResponseEntity.internalServerError()
+          .body(
+              ResponseWrapper.builder()
+                  .payload(Map.of("message", e.getMessage()))
+                  .success(false)
+                  .message("Error Downloading file")
+                  .build());
     }
   }
 
@@ -307,7 +345,6 @@ public class IntegrationService implements IntegrationServiceInterface {
       bytes = fileInputStream.readAllBytes();
       Blob blob = storage.create(blobInfo, bytes);
       if (blob != null) {
-        byte[] prevContent = blob.getContent();
         WritableByteChannel channel = blob.writer();
         channel.write(ByteBuffer.wrap(bytes));
         channel.close();
