@@ -30,7 +30,7 @@ public class AwsConnectionFactory implements AwsCredentialsProvider {
 
   private Map<String,Object> credential;
 
-  @Value("${environment}")
+  @Value("${environment.active}")
   private String environment;
 
   @Override

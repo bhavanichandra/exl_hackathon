@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class AzureConnectionFactory {
   private final CredentialsService credentialsService;
 
-  @Value("${environment}")
+  @Value("${environment.active}")
   private String env;
 
   public Map<String, Object> getAzureCredentials() {
