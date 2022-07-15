@@ -5,17 +5,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.Map;
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class AuthenticationData {
+public class AuthenticationConfiguration {
 
-  private String userId;
-  private String clientId;
-  private List<AuthenticationConfiguration> configurations;
-
+  private String cloudName;
+  private Map<String, Object> credentials;
 }
