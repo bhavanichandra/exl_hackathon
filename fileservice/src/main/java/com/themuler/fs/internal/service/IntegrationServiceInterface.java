@@ -21,4 +21,5 @@ public interface IntegrationServiceInterface {
   Object uploadToAzure(Message<?> message) throws IOException;
 
   Object uploadToGcp(Message<?> message) throws IOException;
+
 }

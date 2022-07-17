@@ -1,18 +1,20 @@
 package com.themuler.fs.internal.service.user;
 
+import com.themuler.fs.api.LoginResponse;
 import com.themuler.fs.api.NewUser;
 import com.themuler.fs.api.ResponseWrapper;
-import com.themuler.fs.internal.model.User;
+import com.themuler.fs.internal.model.AppUser;
 
 import java.util.List;
 
 public interface UserServiceInterface {
 
-  ResponseWrapper<User> saveUser(NewUser user);
+  ResponseWrapper<AppUser> saveUser(NewUser user);
 
-  ResponseWrapper<List<User>> getAllUsers();
+  ResponseWrapper<List<AppUser>> getAllUsers();
 
-  ResponseWrapper<User> getUserById(long id);
 
-  ResponseWrapper<User> validateUser(String username, String password);
+  ResponseWrapper<AppUser> getUserById(String id);
+
+  ResponseWrapper<LoginResponse> validateUser(String username, String password);
 }

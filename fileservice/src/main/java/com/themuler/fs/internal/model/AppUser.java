@@ -1,6 +1,6 @@
 package com.themuler.fs.internal.model;
 
-import com.themuler.fs.api.CloudPlatform;
+import com.themuler.fs.api.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,21 +10,29 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
+import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(value = "client")
-public class Client {
-  @Id private ObjectId id;
+@Document(value = "user")
+public class AppUser {
+  @Id
+  private ObjectId id;
 
-  @Indexed private String name;
+  @Indexed(unique = true)
+  private String email;
 
-  @BsonProperty(value = "cloud_platform")
-  private CloudPlatform cloudPlatform;
+  private String password;
 
-  @DocumentReference(collection = "client_config")
-  private List<ClientConfiguration> clientConfigurations;
+  private String name;
+
+  @Field("client_id")
+  @DocumentReference(collection = "client")
+  private Client client;
+
+  @BsonProperty(value = "user_role")
+  private UserRole role;
+
 }

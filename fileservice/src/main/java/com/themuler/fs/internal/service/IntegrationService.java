@@ -1,24 +1,19 @@
 package com.themuler.fs.internal.service;
 
 import com.azure.core.http.rest.Response;
-import com.azure.core.util.BinaryData;
 import com.azure.core.util.Context;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobClientBuilder;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlockBlobItem;
 import com.azure.storage.blob.options.BlobParallelUploadOptions;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.storage.StorageScopes;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.*;
-import com.google.cloud.storage.spi.v1.StorageRpc;
+import com.themuler.fs.api.CloudPlatform;
 import com.themuler.fs.api.DownloadAPIRequest;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.model.VirtualFileSystem;
-import com.themuler.fs.internal.repository.CloudPlatformRepository;
 import com.themuler.fs.internal.repository.VFSRepository;
 import com.themuler.fs.internal.service.aws.AwsClient;
 import com.themuler.fs.internal.service.azure.AzureConnectionFactory;
@@ -40,19 +35,17 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +62,6 @@ public class IntegrationService implements IntegrationServiceInterface {
 
   private final GoogleCloudConnectionFactory googleCloudConnectionFactory;
   private final VFSRepository vfsRepository;
-  private final CloudPlatformRepository cloudPlatformRepository;
 
   @Value("${azure.token.url}")
   private String azureTokenUrl;
@@ -81,10 +73,9 @@ public class IntegrationService implements IntegrationServiceInterface {
   public Object uploadToAws(Message<Map<String, Object>> message) {
     VirtualFileSystem vfs = new VirtualFileSystem();
     vfs.setStatus("in_progress");
-    var aws = cloudPlatformRepository.findByName("aws").get();
+    var aws = CloudPlatform.AWS.name();
     vfs.setCloudPlatform(aws);
-    vfs.setType("File");
-    vfs.setParent(null);
+    vfs.setVfsType("File");
     var s3 = awsClient.getS3Client();
     var creds = awsClient.getCredentials();
     var bucketName = (String) creds.get("default_bucket_name");
@@ -116,8 +107,8 @@ public class IntegrationService implements IntegrationServiceInterface {
           .success(false)
           .message("Upload Failed");
     }
-    vfs.setSavedBucketName(bucketName);
-    vfs.setPath(key);
+    vfs.setBucketName(bucketName);
+    vfs.setCloudPath(key);
     vfs.setStatus("uploaded");
     VirtualFileSystem savedVFS = vfsRepository.save(vfs);
     log.info("Uploaded to aws");
@@ -131,10 +122,10 @@ public class IntegrationService implements IntegrationServiceInterface {
   @Override
   public Message<String> getDownloadLocation(DownloadAPIRequest request) {
     VirtualFileSystem vfs = vfsRepository.findByFileNameLikeIgnoreCase(request.getFileName());
-    return MessageBuilder.withPayload(vfs.getCloudPlatform().getName())
-        .setHeader("path", vfs.getPath())
+    return MessageBuilder.withPayload(vfs.getCloudPlatform())
+        .setHeader("path", vfs.getCloudPath())
         .setHeader("fileName", vfs.getFileName())
-        .setHeader("bucketName", vfs.getSavedBucketName())
+        .setHeader("bucketName", vfs.getBucketName())
         .setHeader("vfsId", vfs.getId())
         .build();
   }
@@ -187,11 +178,11 @@ public class IntegrationService implements IntegrationServiceInterface {
             .toUriString();
     log.info("Url: {}", url);
     VirtualFileSystem vfs = new VirtualFileSystem();
-    vfs.setSavedBucketName(default_bucket_name);
-    vfs.setCloudPlatform(cloudPlatformRepository.findByName("azure").get());
+    vfs.setBucketName(default_bucket_name);
+    vfs.setVfsType("File");
+    vfs.setCloudPlatform(CloudPlatform.AZURE.name());
     vfs.setStatus("in_progress");
-    vfs.setParent(null);
-    vfs.setPath(default_bucket_name + "/" + fileName);
+    vfs.setCloudPath(default_bucket_name + "/" + fileName);
     vfs.setFileName(fileName);
     log.info("Credentials: " + credential);
     BlobClient blobClient =
@@ -240,7 +231,7 @@ public class IntegrationService implements IntegrationServiceInterface {
       Blob blob = storage.get(BlobId.of(bucket, fileName));
       String contentDisposition = blob.getContentDisposition();
       String contentType = blob.getContentType();
-      if(contentDisposition == null) {
+      if (contentDisposition == null) {
         contentDisposition = "attachment; filename=" + fileName;
       }
       log.info("Content Type: {}, Content Disposition: {}", contentType, contentDisposition);
@@ -286,7 +277,7 @@ public class IntegrationService implements IntegrationServiceInterface {
       BlobProperties properties = blobClient.getProperties();
       String blobContentType = properties.getContentType();
       String contentDisposition = properties.getContentDisposition();
-      if(contentDisposition == null) {
+      if (contentDisposition == null) {
         contentDisposition = "attachment; filename=" + fileName;
       }
       log.info("Content Type: {}, Content Disposition: {}", blobContentType, contentDisposition);
@@ -315,12 +306,11 @@ public class IntegrationService implements IntegrationServiceInterface {
     String default_bucket_name = (String) credential.get("default_bucket_name");
     String contentType = (String) payload.get("contentType");
     VirtualFileSystem vfs = new VirtualFileSystem();
-    vfs.setType("file");
-    vfs.setSavedBucketName(default_bucket_name);
-    vfs.setCloudPlatform(cloudPlatformRepository.findByName("gcp").get());
+    vfs.setVfsType("File");
+    vfs.setBucketName(default_bucket_name);
+    vfs.setCloudPlatform(CloudPlatform.GOOGLE_CLOUD_PLATFORM.name());
     vfs.setStatus("in_progress");
-    vfs.setParent(null);
-    vfs.setPath(default_bucket_name + "/" + fileName);
+    vfs.setCloudPlatform(default_bucket_name + "/" + fileName);
     vfs.setFileName(fileName);
     try {
       String clientId = (String) credential.get("client_id");
