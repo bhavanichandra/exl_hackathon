@@ -15,7 +15,8 @@ public enum UserRole {
           Feature.CONFIGURE_CLOUD_PLATFORM,
           Feature.ADD_NEW_CONFIGURATIONS,
           Feature.GET_CLIENT_BY_ID,
-          Feature.GET_CLIENTS);
+          Feature.GET_CLIENTS,
+          Feature.FULL_ACCESS);
     }
   },
   CLIENT_ADMIN {

@@ -27,5 +27,7 @@ public enum Feature {
   GET_CLIENTS,
   GET_CLIENT_BY_ID,
 
-  GET_VFS_DATA
+  GET_VFS_DATA,
+
+  FULL_ACCESS
 }

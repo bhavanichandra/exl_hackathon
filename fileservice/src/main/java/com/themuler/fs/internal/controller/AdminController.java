@@ -35,7 +35,9 @@ public class AdminController {
   @ResponseBody
   public ResponseEntity<ResponseWrapper<List<AppUser>>> getUsers() {
 
-    boolean allowAccess = this.accessInterface.allowAccess(GET_ALL_USER);
+    boolean allowAccess =
+        this.accessInterface.allowAccess(GET_ALL_USER)
+            || this.accessInterface.allowAccess(FULL_ACCESS);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
@@ -61,7 +63,8 @@ public class AdminController {
   public ResponseEntity<ResponseWrapper<AppUser>> getUsers(@PathVariable("id") String id) {
     boolean allowAccess =
         this.accessInterface.allowAccess(GET_CLIENT_SPECIFIC_USER)
-            || this.accessInterface.allowAccess(GET_ALL_USER);
+            || this.accessInterface.allowAccess(GET_ALL_USER)
+            || this.accessInterface.allowAccess(FULL_ACCESS);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
@@ -88,6 +91,7 @@ public class AdminController {
 
     boolean allowAccess =
         this.accessInterface.allowAccess(ADD_ANY_USER)
+            || this.accessInterface.allowAccess(FULL_ACCESS)
             || this.accessInterface.allowAccess(UPDATE_ANY_USER)
             || this.accessInterface.allowAccess(ADD_CLIENT_SPECIFIC_USER)
             || this.accessInterface.allowAccess(UPDATE_CLIENT_SPECIFIC_USER);
@@ -113,7 +117,9 @@ public class AdminController {
       produces = {"application/json"},
       consumes = {"application/json"})
   public ResponseEntity<ResponseWrapper<Client>> saveClient(@RequestBody NewClient client) {
-    boolean allowAccess = this.accessInterface.allowAccess(ADD_NEW_CLIENTS);
+    boolean allowAccess =
+        this.accessInterface.allowAccess(ADD_NEW_CLIENTS)
+            || this.accessInterface.allowAccess(FULL_ACCESS);
     ResponseWrapper.ResponseWrapperBuilder<Client> builder = ResponseWrapper.builder();
     if (!allowAccess) {
       return ResponseEntity.status(403)
@@ -134,7 +140,9 @@ public class AdminController {
   public ResponseEntity<ResponseWrapper<Client>> saveClient(
       @PathVariable(value = "client_id") String clientId,
       @RequestBody NewClientConfiguration clientConfig) {
-    boolean allowAccess = this.accessInterface.allowAccess(ADD_NEW_CONFIGURATIONS);
+    boolean allowAccess =
+        this.accessInterface.allowAccess(ADD_NEW_CONFIGURATIONS)
+            || this.accessInterface.allowAccess(FULL_ACCESS);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
@@ -158,7 +166,9 @@ public class AdminController {
       path = "/clients",
       produces = {"application/json"})
   public ResponseEntity<ResponseWrapper<List<Client>>> fetchAllClients() {
-    boolean allowAccess = this.accessInterface.allowAccess(GET_CLIENTS);
+    boolean allowAccess =
+        this.accessInterface.allowAccess(GET_CLIENTS)
+            || this.accessInterface.allowAccess(FULL_ACCESS);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
@@ -177,7 +187,9 @@ public class AdminController {
       produces = {"application/json"})
   public ResponseEntity<ResponseWrapper<Client>> getClientById(
       @PathVariable("client_id") String clientId) {
-    boolean allowAccess = this.accessInterface.allowAccess(GET_CLIENT_BY_ID);
+    boolean allowAccess =
+        this.accessInterface.allowAccess(GET_CLIENT_BY_ID)
+            || this.accessInterface.allowAccess(FULL_ACCESS);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
