@@ -11,8 +11,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
-import org.springframework.data.mongodb.core.mapping.FieldType;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 
 import java.util.List;
 
@@ -22,19 +20,14 @@ import java.util.List;
 @AllArgsConstructor
 @Document(value = "client")
 public class Client {
-  @MongoId(targetType = FieldType.STRING)
-  @Id
-  private ObjectId id;
+  @Id private ObjectId id;
+  @Indexed private String name;
+  @BsonProperty(value = "cloud_platform")
+  private CloudPlatform cloudPlatform;
+  @DocumentReference(collection = "client_config")
+  private List<ClientConfiguration> clientConfigurations;
 
   public String getId() {
     return id.toString();
   }
-
-  @Indexed private String name;
-
-  @BsonProperty(value = "cloud_platform")
-  private CloudPlatform cloudPlatform;
-
-  @DocumentReference(collection = "client_config")
-  private List<ClientConfiguration> clientConfigurations;
 }

@@ -1,5 +1,6 @@
 package com.themuler.fs.internal.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.themuler.fs.api.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,8 +11,9 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.*;
-
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @Builder
@@ -19,27 +21,19 @@ import org.springframework.data.mongodb.core.mapping.*;
 @AllArgsConstructor
 @Document(value = "user")
 public class AppUser {
-  @MongoId(targetType = FieldType.STRING)
-  @Id
-  private ObjectId id;
+  @Id private ObjectId id;
+  @Indexed(unique = true)
+  private String email;
+  @JsonIgnore
+  private String password;
+  private String name;
+  @Field("client_id")
+  @DocumentReference(collection = "client")
+  private Client client;
+  @BsonProperty(value = "user_role")
+  private UserRole role;
 
   public String getId() {
     return id.toString();
   }
-
-  @Indexed(unique = true)
-  private String email;
-
-  @BsonIgnore
-  private String password;
-
-  private String name;
-
-  @Field("client_id")
-  @DocumentReference(collection = "client")
-  private Client client;
-
-  @BsonProperty(value = "user_role")
-  private UserRole role;
-
 }

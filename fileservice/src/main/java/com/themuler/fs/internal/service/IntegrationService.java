@@ -161,13 +161,13 @@ public class IntegrationService implements IntegrationServiceInterface {
 
   @Override
   public Object uploadToAzure(Message<?> message) {
-    Map<String, Object> credential = this.azureConnectionFactory.getAzureCredentials();
+    Map<String, String> credential = this.azureConnectionFactory.getAzureCredentials();
     Map<String, Object> payload = (Map<String, Object>) message.getPayload();
     String fileName = (String) payload.get("fileName");
     InputStream fileInputStream = (InputStream) payload.get("fileContent");
-    String accountName = (String) credential.get("storage_account");
-    String default_bucket_name = (String) credential.get("default_bucket_name");
-    String connection_string = (String) credential.get("connection_string");
+    String accountName = credential.get("storage_account");
+    String default_bucket_name = credential.get("default_bucket_name");
+    String connection_string = credential.get("connection_string");
     String url =
         UriComponentsBuilder.newInstance()
             .scheme("https")
@@ -211,13 +211,13 @@ public class IntegrationService implements IntegrationServiceInterface {
   @Override
   public Object downloadFromGcp(Message<?> message) throws IOException {
     MessageHeaders headers = message.getHeaders();
-    Map<String, Object> credential = this.googleCloudConnectionFactory.getGCSCredentials();
+    Map<String, String> credential = this.googleCloudConnectionFactory.getGCSCredentials();
     String bucket = headers.get("bucketName", String.class);
     String fileName = headers.get("fileName", String.class);
-    String clientId = (String) credential.get("client_id");
-    String clientEmail = (String) credential.get("client_email");
-    String privateKeyId = (String) credential.get("private_key_id");
-    String privateKey = (String) credential.get("private_key");
+    String clientId = credential.get("client_id");
+    String clientEmail = credential.get("client_email");
+    String privateKeyId = credential.get("private_key_id");
+    String privateKey = credential.get("private_key");
     ServiceAccountCredentials serviceAccountCredentials =
         ServiceAccountCredentials.fromPkcs8(
             clientId,
@@ -257,7 +257,7 @@ public class IntegrationService implements IntegrationServiceInterface {
     MessageHeaders headers = message.getHeaders();
     String fileName = headers.get("fileName", String.class);
     String path = headers.get("path", String.class);
-    Map<String, Object> credential = this.azureConnectionFactory.getAzureCredentials();
+    Map<String, String> credential = this.azureConnectionFactory.getAzureCredentials();
     String accountName = (String) credential.get("storage_account");
     String connection_string = (String) credential.get("connection_string");
     assert path != null;
@@ -299,11 +299,11 @@ public class IntegrationService implements IntegrationServiceInterface {
 
   @Override
   public Object uploadToGcp(Message<?> message) throws IOException {
-    Map<String, Object> credential = this.googleCloudConnectionFactory.getGCSCredentials();
+    Map<String, String> credential = this.googleCloudConnectionFactory.getGCSCredentials();
     Map<String, Object> payload = (Map<String, Object>) message.getPayload();
     String fileName = (String) payload.get("fileName");
     InputStream fileInputStream = (InputStream) payload.get("fileContent");
-    String default_bucket_name = (String) credential.get("default_bucket_name");
+    String default_bucket_name = credential.get("default_bucket_name");
     String contentType = (String) payload.get("contentType");
     VirtualFileSystem vfs = new VirtualFileSystem();
     vfs.setVfsType("File");
@@ -313,10 +313,10 @@ public class IntegrationService implements IntegrationServiceInterface {
     vfs.setCloudPlatform(default_bucket_name + "/" + fileName);
     vfs.setFileName(fileName);
     try {
-      String clientId = (String) credential.get("client_id");
-      String clientEmail = (String) credential.get("client_email");
-      String privateKeyId = (String) credential.get("private_key_id");
-      String privateKey = (String) credential.get("private_key");
+      String clientId = credential.get("client_id");
+      String clientEmail = credential.get("client_email");
+      String privateKeyId = credential.get("private_key_id");
+      String privateKey = credential.get("private_key");
       ServiceAccountCredentials serviceAccountCredentials =
           ServiceAccountCredentials.fromPkcs8(
               clientId,

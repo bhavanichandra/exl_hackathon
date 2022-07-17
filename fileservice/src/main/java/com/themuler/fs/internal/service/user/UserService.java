@@ -38,12 +38,12 @@ public class UserService implements UserServiceInterface {
             new AppUser(
                 null,
                 newUser.getEmail(),
-                newUser.getPassword(),
+                encryptionUtils.encrypt(newUser.getPassword()),
                 newUser.getName(),
                 client,
                 UserRole.CLIENT_ADMIN);
       }
-      AppUser savedUser = this.userRepository.insert(user);
+      AppUser savedUser = this.userRepository.save(user);
       builder.message("User saved / updated successfully");
       builder.success(true);
       builder.payload(savedUser);

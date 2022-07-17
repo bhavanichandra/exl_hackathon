@@ -56,7 +56,6 @@ public class AdminController {
 
   @GetMapping(
       path = "/users/{id}",
-      consumes = {"application/json"},
       produces = {"application/json"})
   @ResponseBody
   public ResponseEntity<ResponseWrapper<AppUser>> getUsers(@PathVariable("id") String id) {
@@ -113,7 +112,7 @@ public class AdminController {
       value = "/clients",
       produces = {"application/json"},
       consumes = {"application/json"})
-  public ResponseEntity<ResponseWrapper<Client>> saveClient(@RequestBody  NewClient client) {
+  public ResponseEntity<ResponseWrapper<Client>> saveClient(@RequestBody NewClient client) {
     boolean allowAccess = this.accessInterface.allowAccess(ADD_NEW_CLIENTS);
     ResponseWrapper.ResponseWrapperBuilder<Client> builder = ResponseWrapper.builder();
     if (!allowAccess) {
@@ -133,7 +132,8 @@ public class AdminController {
       produces = {"application/json"},
       consumes = {"application/json"})
   public ResponseEntity<ResponseWrapper<Client>> saveClient(
-      @PathVariable(value = "client_id") String clientId, @RequestBody NewClientConfiguration clientConfig) {
+      @PathVariable(value = "client_id") String clientId,
+      @RequestBody NewClientConfiguration clientConfig) {
     boolean allowAccess = this.accessInterface.allowAccess(ADD_NEW_CONFIGURATIONS);
     if (!allowAccess) {
       return ResponseEntity.status(403)
@@ -152,5 +152,46 @@ public class AdminController {
     } else {
       return ResponseEntity.internalServerError().body(clientResponseWrapper);
     }
+  }
+
+  @GetMapping(
+      path = "/clients",
+      produces = {"application/json"})
+  public ResponseEntity<ResponseWrapper<List<Client>>> fetchAllClients() {
+    boolean allowAccess = this.accessInterface.allowAccess(GET_CLIENTS);
+    if (!allowAccess) {
+      return ResponseEntity.status(403)
+          .body(
+              ResponseWrapper.<List<Client>>builder()
+                  .payload(null)
+                  .success(false)
+                  .message("Unauthorized Access")
+                  .build());
+    }
+    ResponseWrapper<List<Client>> allClients = this.adminInterface.getAllClients();
+    return ResponseEntity.ok(allClients);
+  }
+
+  @GetMapping(
+      path = "/clients/{client_id}",
+      produces = {"application/json"})
+  public ResponseEntity<ResponseWrapper<Client>> getClientById(
+      @PathVariable("client_id") String clientId) {
+    boolean allowAccess = this.accessInterface.allowAccess(GET_CLIENT_BY_ID);
+    if (!allowAccess) {
+      return ResponseEntity.status(403)
+          .body(
+              ResponseWrapper.<Client>builder()
+                  .payload(null)
+                  .success(false)
+                  .message("Unauthorized Access")
+                  .build());
+    }
+    ResponseWrapper<Client> clientResponseWrapper = this.adminInterface.getClientById(clientId);
+    int status = 200;
+    if (!clientResponseWrapper.getSuccess()) {
+      status = 404;
+    }
+    return ResponseEntity.status(status).body(clientResponseWrapper);
   }
 }

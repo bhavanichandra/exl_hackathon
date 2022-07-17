@@ -15,7 +15,7 @@ public class AwsClient implements AutoCloseable {
 
   private final S3Presigner s3Presigner;
 
-  private Map<String, Object> credentials;
+  private Map<String, String> credentials;
 
   @Autowired
   public AwsClient(AwsConnectionFactory factory) {
@@ -39,7 +39,7 @@ public class AwsClient implements AutoCloseable {
     this.s3Client.close();
   }
 
-  public Map<String, Object> getCredentials() {
+  public Map<String, String> getCredentials() {
     return credentials;
   }
 }

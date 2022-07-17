@@ -69,9 +69,8 @@ public class AdminService implements AdminInterface {
       return builder.message("No Client with id exists").success(false).payload(null).build();
     }
     Map<String, String> credentials;
-    if (clientConfiguration.getPerformEncryption()) {
-
       String fieldsToEncrypt = clientConfiguration.getFieldsToEncrypt();
+    if (clientConfiguration.getPerformEncryption()) {
       if (fieldsToEncrypt.equalsIgnoreCase("all")) {
         Map<String, String> encryptedCredentials = new HashMap<>();
         clientConfiguration
@@ -96,18 +95,47 @@ public class AdminService implements AdminInterface {
         credentials = encryptedCredentials;
       }
     } else {
+      fieldsToEncrypt = null;
       credentials = clientConfiguration.getCredentials();
     }
     Client client = clientOpt.get();
     ClientConfiguration configuration =
         ClientConfiguration.builder()
             .credentials(credentials)
-            .encryptedFields(clientConfiguration.getFieldsToEncrypt())
+            .encryptedFields(fieldsToEncrypt)
             .environment(clientConfiguration.getEnvironment())
             .build();
     ClientConfiguration savedConfig = this.clientConfigurationRepository.save(configuration);
     client.getClientConfigurations().add(savedConfig);
     this.clientRepository.save(client);
     return builder.message("Added Client Config").payload(client).success(true).build();
+  }
+
+  @Override
+  public ResponseWrapper<List<Client>> getAllClients() {
+    List<Client> all = this.clientRepository.findAll();
+    return ResponseWrapper.<List<Client>>builder()
+        .success(true)
+        .payload(all)
+        .message("Get All Clients")
+        .build();
+  }
+
+  @Override
+  public ResponseWrapper<Client> getClientById(String id) {
+    ObjectId objectId = new ObjectId(id);
+    Optional<Client> clientById = this.clientRepository.findById(objectId);
+    if (clientById.isEmpty()) {
+      return ResponseWrapper.<Client>builder()
+          .success(true)
+          .payload(null)
+          .message("No Client found for client id: " + id)
+          .build();
+    }
+    return ResponseWrapper.<Client>builder()
+        .success(true)
+        .payload(clientById.get())
+        .message("Get All Clients")
+        .build();
   }
 }

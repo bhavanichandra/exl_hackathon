@@ -1,5 +1,7 @@
 package com.themuler.fs.internal.service.aws;
 
+import com.themuler.fs.api.CloudPlatform;
+import com.themuler.fs.internal.exception.EmptyCredentialsException;
 import com.themuler.fs.internal.model.AuthenticationConfiguration;
 import com.themuler.fs.internal.model.AuthenticationData;
 import com.themuler.fs.internal.service.auth.AccessInterface;
@@ -11,9 +13,8 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -22,27 +23,34 @@ public class AwsConnectionFactory implements AwsCredentialsProvider {
 
   private final AccessInterface credentialsService;
 
-  private Map<String, Object> credential;
+  private Map<String, String> credentials;
 
   @Value("${environment.active}")
   private String environment;
 
   @Override
   public AwsCredentials resolveCredentials() {
-    AuthenticationData credentialsFromConfiguration =
-        this.credentialsService.getClientConfiguration(environment);
-    Map<String, Object> credential =
-        credentialsFromConfiguration.getConfigurations().stream()
-            .filter(each -> each.getCloudName().equals("aws"))
-            .map(AuthenticationConfiguration::getCredentials)
-            .collect(Collectors.toList())
-            .get(0);
-    this.credential = credential;
-    return AwsBasicCredentials.create(
-        (String) credential.get("client_id"), (String) credential.get("client_secret"));
+    try {
+      AuthenticationData credentialsFromConfiguration =
+          this.credentialsService.getClientConfiguration(environment);
+      Optional<AuthenticationConfiguration> authConfig =
+          credentialsFromConfiguration.getConfigurations().stream()
+              .filter(each -> each.getCloudName().equals(CloudPlatform.AWS.getCloudPlatform()))
+              .findFirst();
+      if (authConfig.isEmpty()) {
+        throw new EmptyCredentialsException("Credentials are empty. Please configure them!");
+      }
+      AuthenticationConfiguration configuration = authConfig.get();
+      this.credentials = configuration.getCredentials();
+      return AwsBasicCredentials.create(
+          credentials.get("client_id"), credentials.get("client_secret"));
+    } catch (Exception ex) {
+      log.error("Error retrieving credentials: {} ", ex.getMessage());
+      return AwsBasicCredentials.create(null, null);
+    }
   }
 
-  public Map<String, Object> getCredential() {
-    return credential;
+  public Map<String, String> getCredential() {
+    return credentials;
   }
 }
