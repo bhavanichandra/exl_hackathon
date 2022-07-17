@@ -1,0 +1,55 @@
+[
+  {
+    "_id": {"$oid": "62d3b93f1fa8314a207e2288"},
+    "_class": "com.themuler.fs.internal.model.AppUser",
+    "email": "admin@test.com",
+    "name": "Admin",
+    "password": "wC2ZdxT/Catqb5QmLTFSpQ==",
+    "role": "SUPER_ADMIN"
+  },
+  {
+    "_id": {"$oid": "62d40cf5992dc61a7f3b1028"},
+    "_class": "com.themuler.fs.internal.model.AppUser",
+    "email": "bhavanichandra@test.com",
+    "name": "Bhavani Chandra",
+    "password": "B6/Av7XbgQpx3DRt+gFH5Q==",
+    "role": "CLIENT_ADMIN",
+    "client_id": {"$oid": "62d3fc81a60fc76a94e44600"}
+  },
+  {
+    "_id": {"$oid": "62d4456adc8117247cd8901b"},
+    "_class": "com.themuler.fs.internal.model.AppUser",
+    "email": "tata@test.com",
+    "name": "Tata Chandra",
+    "password": "B6/Av7XbgQpx3DRt+gFH5Q==",
+    "role": "CLIENT_ADMIN",
+    "client_id": {"$oid": "62d3fdbad19eec05109b9972"}
+  },
+  {
+    "_id": {"$oid": "62d44591dc8117247cd8901c"},
+    "_class": "com.themuler.fs.internal.model.AppUser",
+    "email": "kara@test.com",
+    "name": "Kara",
+    "password": "B6/Av7XbgQpx3DRt+gFH5Q==",
+    "role": "CLIENT_ADMIN",
+    "client_id": {"$oid": "62d3fe7e7884865e90a6ca84"}
+  },
+  {
+    "_id": {"$oid": "62d45ebd5d646e13e395479a"},
+    "_class": "com.themuler.fs.internal.model.AppUser",
+    "email": "markus@test.com",
+    "name": "Markus",
+    "password": "B6/Av7XbgQpx3DRt+gFH5Q==",
+    "role": "TEMP_USER",
+    "client_id": {"$oid": "62d40725543d4b703d458f87"}
+  },
+  {
+    "_id": {"$oid": "62d45f1a5d646e13e395479c"},
+    "_class": "com.themuler.fs.internal.model.AppUser",
+    "email": "aron@test.com",
+    "name": "Aron",
+    "password": "B6/Av7XbgQpx3DRt+gFH5Q==",
+    "role": "USER",
+    "client_id": {"$oid": "62d40725543d4b703d458f87"}
+  }
+]

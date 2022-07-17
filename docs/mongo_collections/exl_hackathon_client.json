@@ -1,0 +1,38 @@
+[
+  {
+    "_id": {"$oid": "62d3fc81a60fc76a94e44600"},
+    "_class": "com.themuler.fs.internal.model.Client",
+    "clientConfigurations": [
+      {"$oid": "62d3fc93a60fc76a94e44601"}
+    ],
+    "cloudPlatform": "AWS",
+    "name": "Jaggaer"
+  },
+  {
+    "_id": {"$oid": "62d3fdbad19eec05109b9972"},
+    "_class": "com.themuler.fs.internal.model.Client",
+    "clientConfigurations": [
+      {"$oid": "62d40920543d4b703d458f89"}
+    ],
+    "cloudPlatform": "AZURE",
+    "name": "Standav"
+  },
+  {
+    "_id": {"$oid": "62d3fe7e7884865e90a6ca84"},
+    "_class": "com.themuler.fs.internal.model.Client",
+    "clientConfigurations": [
+      {"$oid": "62d409a3543d4b703d458f8a"}
+    ],
+    "cloudPlatform": "GOOGLE_CLOUD_PLATFORM",
+    "name": "Cisco"
+  },
+  {
+    "_id": {"$oid": "62d40725543d4b703d458f87"},
+    "_class": "com.themuler.fs.internal.model.Client",
+    "clientConfigurations": [
+      {"$oid": "62d461ca5e89be4a03aa2fcf"}
+    ],
+    "cloudPlatform": "AWS",
+    "name": "Amazon"
+  }
+]
