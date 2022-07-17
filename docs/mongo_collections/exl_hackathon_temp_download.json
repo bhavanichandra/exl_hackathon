@@ -1,0 +1,101 @@
+[
+  {
+    "_id": {"$oid": "62d47fa3e2914d3547202129"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "endTime": {"$date": "2022-07-17T21:31:15.923Z"},
+    "fileName": "db-10.png",
+    "isAvailable": false,
+    "startTime": {"$date": "2022-07-17T21:31:14.349Z"},
+    "status": "REMOVED_ACCESS"
+  },
+  {
+    "_id": {"$oid": "62d4800968689b56fd0830a6"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "endTime": {"$date": "2022-07-17T21:32:57.796Z"},
+    "fileName": "db-10.png",
+    "isAvailable": false,
+    "startTime": {"$date": "2022-07-17T21:32:56.844Z"},
+    "status": "REMOVED_ACCESS"
+  },
+  {
+    "_id": {"$oid": "62d480fcec34d71f59344fed"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "endTime": {"$date": "2022-07-17T21:37:00.283Z"},
+    "fileName": "db-10.png",
+    "isAvailable": false,
+    "startTime": {"$date": "2022-07-17T21:36:59.375Z"},
+    "status": "REMOVED_ACCESS"
+  },
+  {
+    "_id": {"$oid": "62d482283593d578464ce04d"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "endTime": {"$date": "2022-07-17T21:42:00.387Z"},
+    "fileName": "db-10.png",
+    "isAvailable": false,
+    "startTime": {"$date": "2022-07-17T21:41:59.445Z"},
+    "status": "REMOVED_ACCESS"
+  },
+  {
+    "_id": {"$oid": "62d482fec7af34632fc632cf"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "endTime": {"$date": "2022-07-17T21:45:34.185Z"},
+    "fileName": "db-10.png",
+    "isAvailable": false,
+    "startTime": {"$date": "2022-07-17T21:45:33.301Z"},
+    "status": "REMOVED_ACCESS"
+  },
+  {
+    "_id": {"$oid": "62d484663a7a5d1cb6f35c0e"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "fileName": "db-10.png",
+    "isAvailable": true,
+    "startTime": {"$date": "2022-07-17T21:51:33.132Z"},
+    "status": "DOWNLOAD_LINK_SHARED",
+    "downloadUrl": "http://localhost:8081/files/db-10.png"
+  },
+  {
+    "_id": {"$oid": "62d485c71385a732ee3e1820"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "fileName": "db-10.png",
+    "isAvailable": true,
+    "startTime": {"$date": "2022-07-17T21:57:26.597Z"},
+    "status": "DOWNLOAD_LINK_SHARED",
+    "downloadUrl": "http://localhost:8081/files/db-102022-07-17T21:57:27.521286Zpng"
+  },
+  {
+    "_id": {"$oid": "62d487972e3d4432000ca0c9"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "fileName": "db-10.png",
+    "isAvailable": true,
+    "startTime": {"$date": "2022-07-17T22:05:10.296Z"},
+    "status": "DOWNLOAD_LINK_SHARED",
+    "downloadUrl": "http://localhost:8081/files/db-10e2fbb83a-8c4e-4034-8e8d-f3048c96079fpng"
+  },
+  {
+    "_id": {"$oid": "62d48b5cb04fe90536ab709d"},
+    "_class": "com.themuler.fs.internal.model.TempDownload",
+    "bucketName": "exl-hackthon",
+    "cloudPlatform": "AWS",
+    "fileName": "db-10-4c712113-1413-428c-a561-6f0017c1b88a.png",
+    "isAvailable": true,
+    "startTime": {"$date": "2022-07-17T22:21:15.805Z"},
+    "status": "DOWNLOAD_LINK_SHARED",
+    "downloadUrl": "http://localhost:8081/files/db-10-4c712113-1413-428c-a561-6f0017c1b88a.png"
+  }
+]

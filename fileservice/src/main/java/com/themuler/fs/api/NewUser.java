@@ -20,10 +20,8 @@ public class NewUser {
 
   @NotNull @NotBlank private String password;
 
-  @NotNull @NotBlank private String role;
+  @NotNull @NotBlank private UserRole role;
 
   @JsonProperty("client")
-  @NotNull
-  @NotBlank
   private String client;
 }

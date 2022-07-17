@@ -7,21 +7,25 @@ import com.azure.storage.blob.BlobClientBuilder;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlockBlobItem;
 import com.azure.storage.blob.options.BlobParallelUploadOptions;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.storage.StorageScopes;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.*;
 import com.themuler.fs.api.CloudPlatform;
 import com.themuler.fs.api.DownloadAPIRequest;
 import com.themuler.fs.api.ResponseWrapper;
+import com.themuler.fs.internal.model.AppUser;
+import com.themuler.fs.internal.model.ClientConfiguration;
+import com.themuler.fs.internal.model.TempDownload;
 import com.themuler.fs.internal.model.VirtualFileSystem;
+import com.themuler.fs.internal.repository.TempDownloadRepository;
 import com.themuler.fs.internal.repository.VFSRepository;
-import com.themuler.fs.internal.service.aws.AwsClient;
-import com.themuler.fs.internal.service.azure.AzureConnectionFactory;
-import com.themuler.fs.internal.service.gcs.GoogleCloudConnectionFactory;
+import com.themuler.fs.internal.service.utility.EncryptionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
@@ -29,45 +33,50 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.http.HttpClient;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class IntegrationService implements IntegrationServiceInterface {
 
-  private static final HttpClient httpClient =
-      HttpClient.newBuilder()
-          .version(HttpClient.Version.HTTP_1_1)
-          .connectTimeout(Duration.ofSeconds(10))
-          .build();
-  private final AwsClient awsClient;
-  private final AzureConnectionFactory azureConnectionFactory;
-
-  private final GoogleCloudConnectionFactory googleCloudConnectionFactory;
   private final VFSRepository vfsRepository;
 
-  @Value("${azure.token.url}")
-  private String azureTokenUrl;
+  private final EncryptionUtils encryptionUtils;
+
+  private final TempDownloadRepository tempDownloadRepository;
 
   @Value("${download.link.active.time}")
   private long durationInMinutes;
+
+  @Value("${temp.location}")
+  private String tempLocation;
+
+  private S3Client getS3Client(Map<String, String> decryptCredentials) {
+    return S3Client.builder()
+        .credentialsProvider(
+            () ->
+                AwsBasicCredentials.create(
+                    decryptCredentials.get("client_id"), decryptCredentials.get("client_secret")))
+        .build();
+  }
 
   @Override
   public Object uploadToAws(Message<Map<String, Object>> message) {
@@ -76,12 +85,20 @@ public class IntegrationService implements IntegrationServiceInterface {
     var aws = CloudPlatform.AWS.name();
     vfs.setCloudPlatform(aws);
     vfs.setVfsType("File");
-    var s3 = awsClient.getS3Client();
-    var creds = awsClient.getCredentials();
-    var bucketName = (String) creds.get("default_bucket_name");
+
     Map<String, Object> payload = message.getPayload();
+    AppUser user = new ObjectMapper().convertValue(payload.get("appUser"), AppUser.class);
+    ClientConfiguration configuration =
+        new ObjectMapper().convertValue(payload.get("credentials"), ClientConfiguration.class);
+    assert configuration != null;
+    Map<String, String> decryptCredentials = this.decryptCredentials(configuration);
+    log.info("Credentials: {}", decryptCredentials);
+    var s3 = getS3Client(decryptCredentials);
+    var bucketName = decryptCredentials.get("default_bucket_name");
     String fileName = (String) payload.get("fileName");
     vfs.setFileName(fileName);
+    vfs.setUser(user);
+    vfs.setClient(user.getClient());
     long contentLength = (Long) payload.get("size");
     String contentType = (String) payload.get("contentType");
     InputStream inputStream = (FileInputStream) payload.get("fileContent");
@@ -120,9 +137,144 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Message<String> getDownloadLocation(DownloadAPIRequest request) {
-    VirtualFileSystem vfs = vfsRepository.findByFileNameLikeIgnoreCase(request.getFileName());
-    return MessageBuilder.withPayload(vfs.getCloudPlatform())
+  public Object uploadToAzure(Message<Map<String, Object>> message) {
+    Map<String, Object> payload = message.getPayload();
+    ClientConfiguration configuration =
+        new ObjectMapper().convertValue(payload.get("credentials"), ClientConfiguration.class);
+    assert configuration != null;
+    Map<String, String> decryptCredentials = this.decryptCredentials(configuration);
+    log.info("Credentials: {}", decryptCredentials);
+    String fileName = (String) payload.get("fileName");
+    InputStream fileInputStream = (InputStream) payload.get("fileContent");
+    String accountName = decryptCredentials.get("storage_account");
+    String default_bucket_name = decryptCredentials.get("default_bucket_name");
+    String connection_string = decryptCredentials.get("connection_string");
+    String url =
+        UriComponentsBuilder.newInstance()
+            .scheme("https")
+            .host(accountName + ".blob.core.windows.net")
+            .path("/{container_name}/{blob_name}")
+            .uriVariables(Map.of("container_name", default_bucket_name, "blob_name", fileName))
+            .build()
+            .toUriString();
+    log.info("Url: {}", url);
+    VirtualFileSystem vfs = new VirtualFileSystem();
+    AppUser user = new ObjectMapper().convertValue(payload.get("appUser"), AppUser.class);
+    vfs.setClient(user.getClient());
+    vfs.setUser(user);
+    vfs.setBucketName(default_bucket_name);
+    vfs.setVfsType("File");
+    vfs.setCloudPlatform(CloudPlatform.AZURE.name());
+    vfs.setStatus("in_progress");
+    vfs.setCloudPath(default_bucket_name + "/" + fileName);
+    vfs.setFileName(fileName);
+    log.info("Credentials: " + decryptCredentials);
+    BlobClient blobClient =
+        new BlobClientBuilder().endpoint(url).connectionString(connection_string).buildClient();
+    var options = new BlobParallelUploadOptions(fileInputStream);
+    Response<BlockBlobItem> blockBlobItemResponse =
+        blobClient.uploadWithResponse(options, Duration.ofMinutes(10), Context.NONE);
+    long statusCode = blockBlobItemResponse.getStatusCode();
+    String status = "uploaded";
+    String msg = "Upload Success";
+    boolean success = true;
+    if (statusCode != 201) {
+      status = "failed";
+      msg = "Upload Failed.Status code: " + statusCode;
+      success = false;
+    }
+    vfs.setStatus(status);
+    vfsRepository.save(vfs);
+    return ResponseWrapper.<VirtualFileSystem>builder()
+        .success(success)
+        .payload(vfs)
+        .message(msg)
+        .build();
+  }
+
+  @Override
+  public Object uploadToGcp(Message<Map<String, Object>> message) {
+    Map<String, Object> payload = message.getPayload();
+    ClientConfiguration configuration =
+        new ObjectMapper().convertValue(payload.get("credentials"), ClientConfiguration.class);
+    assert configuration != null;
+    Map<String, String> decryptCredentials = this.decryptCredentials(configuration);
+    log.info("Credentials: {}", decryptCredentials);
+    String fileName = (String) payload.get("fileName");
+    InputStream fileInputStream = (InputStream) payload.get("fileContent");
+    String default_bucket_name = decryptCredentials.get("default_bucket_name");
+    String contentType = (String) payload.get("contentType");
+    VirtualFileSystem vfs = new VirtualFileSystem();
+    vfs.setVfsType("File");
+    vfs.setCloudPath(default_bucket_name + "/" + fileName);
+    vfs.setBucketName(default_bucket_name);
+    vfs.setCloudPlatform(CloudPlatform.GOOGLE_CLOUD_PLATFORM.name());
+    vfs.setStatus("in_progress");
+    vfs.setFileName(fileName);
+    AppUser user = new ObjectMapper().convertValue(payload.get("appUser"), AppUser.class);
+    vfs.setClient(user.getClient());
+    vfs.setUser(user);
+    try {
+      String clientId = decryptCredentials.get("client_id");
+      String clientEmail = decryptCredentials.get("client_email");
+      String privateKeyId = decryptCredentials.get("private_key_id");
+      String privateKey = decryptCredentials.get("private_key");
+      ServiceAccountCredentials serviceAccountCredentials =
+          ServiceAccountCredentials.fromPkcs8(
+              clientId,
+              clientEmail,
+              privateKey,
+              privateKeyId,
+              Collections.singletonList(StorageScopes.DEVSTORAGE_FULL_CONTROL));
+      Storage storage =
+          StorageOptions.newBuilder()
+              .setCredentials(serviceAccountCredentials)
+              .build()
+              .getService();
+      BlobId blobId = BlobId.of(default_bucket_name, fileName);
+      BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
+      final byte[] bytes;
+      bytes = fileInputStream.readAllBytes();
+      Blob blob = storage.create(blobInfo, bytes);
+      if (blob != null) {
+        WritableByteChannel channel = blob.writer();
+        channel.write(ByteBuffer.wrap(bytes));
+        channel.close();
+      }
+      vfs.setStatus("Uploaded");
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      vfs.setStatus("Failed");
+      return ResponseWrapper.<VirtualFileSystem>builder()
+          .payload(vfs)
+          .success(false)
+          .message("Upload Failed")
+          .build();
+    }
+    vfsRepository.save(vfs);
+    return ResponseWrapper.<VirtualFileSystem>builder()
+        .payload(vfs)
+        .success(true)
+        .message("successfully uploaded")
+        .build();
+  }
+
+  @Override
+  public Message<CloudPlatform> getDownloadLocation(Message<DownloadAPIRequest> message) {
+    DownloadAPIRequest request = message.getPayload();
+    AppUser appUser = message.getHeaders().get("appUser", AppUser.class);
+    assert appUser != null;
+    VirtualFileSystem vfs =
+        vfsRepository.findByFileNameLikeIgnoreCaseAndClient(
+            request.getFileName(), appUser.getClient());
+    if (vfs == null) {
+      return MessageBuilder.withPayload(CloudPlatform.NONE)
+          .copyHeaders(message.getHeaders())
+          .build();
+    }
+    log.info("headers: {}", message.getHeaders());
+    CloudPlatform cloudPlatform = CloudPlatform.valueOf(vfs.getCloudPlatform());
+    return MessageBuilder.withPayload(cloudPlatform)
         .setHeader("path", vfs.getCloudPath())
         .setHeader("fileName", vfs.getFileName())
         .setHeader("bucketName", vfs.getBucketName())
@@ -131,11 +283,15 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object downloadFromAws(Message<String> message) {
+  public ResponseEntity<?> downloadFromAws(Message<String> message) {
     MessageHeaders headers = message.getHeaders();
     String path = headers.get("path", String.class);
     String bucket = headers.get("bucketName", String.class);
-    var s3Client = awsClient.getS3Client();
+    ClientConfiguration configuration = headers.get("credentials", ClientConfiguration.class);
+    assert configuration != null;
+    Map<String, String> decryptCredentials = this.decryptCredentials(configuration);
+    var s3Client = getS3Client(decryptCredentials);
+    log.info("Credentials: {}", decryptCredentials);
     try {
       ResponseInputStream<GetObjectResponse> respIO =
           s3Client.getObject(GetObjectRequest.builder().bucket(bucket).key(path).build());
@@ -149,6 +305,7 @@ public class IntegrationService implements IntegrationServiceInterface {
           .body(fileOut.toByteArray());
 
     } catch (Exception ex) {
+      ex.printStackTrace();
       return ResponseEntity.internalServerError()
           .body(
               ResponseWrapper.builder()
@@ -160,64 +317,19 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object uploadToAzure(Message<?> message) {
-    Map<String, Object> credential = this.azureConnectionFactory.getAzureCredentials();
-    Map<String, Object> payload = (Map<String, Object>) message.getPayload();
-    String fileName = (String) payload.get("fileName");
-    InputStream fileInputStream = (InputStream) payload.get("fileContent");
-    String accountName = (String) credential.get("storage_account");
-    String default_bucket_name = (String) credential.get("default_bucket_name");
-    String connection_string = (String) credential.get("connection_string");
-    String url =
-        UriComponentsBuilder.newInstance()
-            .scheme("https")
-            .host(accountName + ".blob.core.windows.net")
-            .path("/{container_name}/{blob_name}")
-            .uriVariables(Map.of("container_name", default_bucket_name, "blob_name", fileName))
-            .build()
-            .toUriString();
-    log.info("Url: {}", url);
-    VirtualFileSystem vfs = new VirtualFileSystem();
-    vfs.setBucketName(default_bucket_name);
-    vfs.setVfsType("File");
-    vfs.setCloudPlatform(CloudPlatform.AZURE.name());
-    vfs.setStatus("in_progress");
-    vfs.setCloudPath(default_bucket_name + "/" + fileName);
-    vfs.setFileName(fileName);
-    log.info("Credentials: " + credential);
-    BlobClient blobClient =
-        new BlobClientBuilder().endpoint(url).connectionString(connection_string).buildClient();
-    var options = new BlobParallelUploadOptions(fileInputStream);
-    Response<BlockBlobItem> blockBlobItemResponse =
-        blobClient.uploadWithResponse(options, Duration.ofMinutes(10), Context.NONE);
-    long statusCode = blockBlobItemResponse.getStatusCode();
-    if (statusCode != 200) {
-      vfs.setStatus("failed");
-      return ResponseWrapper.<VirtualFileSystem>builder()
-          .success(false)
-          .payload(vfs)
-          .message("Upload Failed")
-          .build();
-    }
-    vfs.setStatus("upload successful");
-    vfsRepository.save(vfs);
-    return ResponseWrapper.<VirtualFileSystem>builder()
-        .success(true)
-        .payload(vfs)
-        .message("Upload successful")
-        .build();
-  }
-
-  @Override
-  public Object downloadFromGcp(Message<?> message) throws IOException {
+  public ResponseEntity<?> downloadFromGcp(Message<?> message) throws IOException {
     MessageHeaders headers = message.getHeaders();
-    Map<String, Object> credential = this.googleCloudConnectionFactory.getGCSCredentials();
+    ClientConfiguration configuration =
+        message.getHeaders().get("credentials", ClientConfiguration.class);
+    assert configuration != null;
+    Map<String, String> decryptCredentials = this.decryptCredentials(configuration);
+    log.info("Credentials: {}", decryptCredentials);
     String bucket = headers.get("bucketName", String.class);
     String fileName = headers.get("fileName", String.class);
-    String clientId = (String) credential.get("client_id");
-    String clientEmail = (String) credential.get("client_email");
-    String privateKeyId = (String) credential.get("private_key_id");
-    String privateKey = (String) credential.get("private_key");
+    String clientId = decryptCredentials.get("client_id");
+    String clientEmail = decryptCredentials.get("client_email");
+    String privateKeyId = decryptCredentials.get("private_key_id");
+    String privateKey = decryptCredentials.get("private_key");
     ServiceAccountCredentials serviceAccountCredentials =
         ServiceAccountCredentials.fromPkcs8(
             clientId,
@@ -253,13 +365,18 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object downloadFromAzure(Message<?> message) {
+  public ResponseEntity<?> downloadFromAzure(Message<?> message) {
     MessageHeaders headers = message.getHeaders();
     String fileName = headers.get("fileName", String.class);
     String path = headers.get("path", String.class);
-    Map<String, Object> credential = this.azureConnectionFactory.getAzureCredentials();
-    String accountName = (String) credential.get("storage_account");
-    String connection_string = (String) credential.get("connection_string");
+    ClientConfiguration configuration =
+        message.getHeaders().get("credentials", ClientConfiguration.class);
+
+    assert configuration != null;
+    Map<String, String> decryptCredentials = this.decryptCredentials(configuration);
+    log.info("Credentials: {}", decryptCredentials);
+    String accountName = decryptCredentials.get("storage_account");
+    String connection_string = decryptCredentials.get("connection_string");
     assert path != null;
     String url =
         UriComponentsBuilder.newInstance()
@@ -298,62 +415,143 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object uploadToGcp(Message<?> message) throws IOException {
-    Map<String, Object> credential = this.googleCloudConnectionFactory.getGCSCredentials();
-    Map<String, Object> payload = (Map<String, Object>) message.getPayload();
-    String fileName = (String) payload.get("fileName");
-    InputStream fileInputStream = (InputStream) payload.get("fileContent");
-    String default_bucket_name = (String) credential.get("default_bucket_name");
-    String contentType = (String) payload.get("contentType");
-    VirtualFileSystem vfs = new VirtualFileSystem();
-    vfs.setVfsType("File");
-    vfs.setBucketName(default_bucket_name);
-    vfs.setCloudPlatform(CloudPlatform.GOOGLE_CLOUD_PLATFORM.name());
-    vfs.setStatus("in_progress");
-    vfs.setCloudPlatform(default_bucket_name + "/" + fileName);
-    vfs.setFileName(fileName);
+  public ResponseEntity<?> temporaryDownload(Message<DownloadAPIRequest> message)
+      throws IOException {
+    DownloadAPIRequest payload = message.getPayload();
+    AppUser appUser = message.getHeaders().get("appUser", AppUser.class);
+    String fileName = payload.getFileName();
+    String[] fileNameSplit = fileName.split("\\.(?=[^\\.]+$)");
+    String newFileName = fileNameSplit[0] + "-" + UUID.randomUUID() + "." + fileNameSplit[1];
+    assert appUser != null;
+    VirtualFileSystem vfs =
+        this.vfsRepository.findByFileNameLikeIgnoreCaseAndClient(fileName, appUser.getClient());
+    String bucketName = vfs.getBucketName();
+    if (payload.getBucketName() != null && !bucketName.equals(payload.getBucketName())) {
+      bucketName = payload.getBucketName();
+    }
+    TempDownload tempDownload =
+        TempDownload.initialize(newFileName, bucketName, vfs.getCloudPlatform());
+    Message<String> downloadRequest =
+        MessageBuilder.withPayload(vfs.getCloudPlatform())
+            .setHeader("path", vfs.getCloudPath())
+            .setHeader("fileName", vfs.getFileName())
+            .setHeader("bucketName", vfs.getBucketName())
+            .setHeader("vfsId", vfs.getId())
+            .copyHeadersIfAbsent(message.getHeaders())
+            .build();
+    ResponseEntity<?> downloadResponse;
+    switch (vfs.getCloudPlatform().toLowerCase(Locale.ROOT)) {
+      case "aws":
+        {
+          downloadResponse = this.downloadFromAws(downloadRequest);
+          break;
+        }
+      case "azure":
+        {
+          downloadResponse = this.downloadFromAzure(downloadRequest);
+          break;
+        }
+      case "gcp":
+        {
+          downloadResponse = this.downloadFromGcp(downloadRequest);
+          break;
+        }
+      default:
+        downloadResponse = null;
+        break;
+    }
+    if (downloadResponse == null) {
+      tempDownload.makeDownloadAvailable(null);
+      tempDownload.removeAccess();
+      tempDownloadRepository.save(tempDownload);
+      return ResponseEntity.internalServerError()
+          .body(
+              ResponseWrapper.builder()
+                  .message("no file found!")
+                  .success(false)
+                  .payload(null)
+                  .build());
+    }
+    if (downloadResponse.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+      tempDownload.makeDownloadAvailable(null);
+      tempDownload.removeAccess();
+      tempDownloadRepository.save(tempDownload);
+      return downloadResponse;
+    }
     try {
-      String clientId = (String) credential.get("client_id");
-      String clientEmail = (String) credential.get("client_email");
-      String privateKeyId = (String) credential.get("private_key_id");
-      String privateKey = (String) credential.get("private_key");
-      ServiceAccountCredentials serviceAccountCredentials =
-          ServiceAccountCredentials.fromPkcs8(
-              clientId,
-              clientEmail,
-              privateKey,
-              privateKeyId,
-              Collections.singletonList(StorageScopes.DEVSTORAGE_FULL_CONTROL));
-      Storage storage =
-          StorageOptions.newBuilder()
-              .setCredentials(serviceAccountCredentials)
-              .build()
-              .getService();
-      BlobId blobId = BlobId.of(default_bucket_name, fileName);
-      BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(contentType).build();
-      final byte[] bytes;
-      bytes = fileInputStream.readAllBytes();
-      Blob blob = storage.create(blobInfo, bytes);
-      if (blob != null) {
-        WritableByteChannel channel = blob.writer();
-        channel.write(ByteBuffer.wrap(bytes));
-        channel.close();
-      }
-      vfs.setStatus("upload successful");
+      byte[] fileBytes = (byte[]) downloadResponse.getBody();
+
+      File file = new File(this.tempLocation + newFileName);
+      boolean isFileCreated = file.createNewFile();
+      log.info("File Created? {} ", isFileCreated);
+      FileOutputStream fileOut = new FileOutputStream(file);
+      assert fileBytes != null;
+      fileOut.write(fileBytes);
+      fileOut.close();
+      String url = "http://localhost:8081/files/" + newFileName;
+      tempDownload.makeDownloadAvailable(url);
+      tempDownloadRepository.save(tempDownload);
+      ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
+      executorService.schedule(
+          () -> {
+            try {
+              File directory = new File(this.tempLocation);
+              for (File f : Objects.requireNonNull(directory.listFiles())) {
+                if (!f.isDirectory()) {
+                  f.delete();
+                }
+              }
+            } finally {
+              log.info("All Files are deleted.");
+              executorService.shutdown();
+            }
+          },
+          durationInMinutes,
+          TimeUnit.MINUTES);
+      return ResponseEntity.ok()
+          .body(
+              ResponseWrapper.builder()
+                  .payload(Map.of("url", url))
+                  .success(true)
+                  .message("Please download the file.Link works for 10min")
+                  .build());
     } catch (Exception ex) {
       ex.printStackTrace();
-      vfs.setStatus("failed");
-      return ResponseWrapper.<VirtualFileSystem>builder()
-          .payload(vfs)
-          .success(false)
-          .message("Upload Failed")
-          .build();
+      tempDownload.makeDownloadAvailable(null);
+      tempDownload.removeAccess();
+      tempDownloadRepository.save(tempDownload);
+      return ResponseEntity.internalServerError()
+          .body(
+              ResponseWrapper.builder()
+                  .message("failed to download: " + ex.getMessage())
+                  .success(false)
+                  .payload(null)
+                  .build());
     }
-    vfsRepository.save(vfs);
-    return ResponseWrapper.<VirtualFileSystem>builder()
-        .payload(vfs)
-        .success(true)
-        .message("successfully uploaded")
-        .build();
+  }
+
+  private Map<String, String> decryptCredentials(ClientConfiguration clientConfiguration) {
+    Map<String, String> credentials = new HashMap<>();
+    String encryptedKeys = clientConfiguration.getEncryptedFields();
+    clientConfiguration
+        .getCredentials()
+        .forEach(
+            (key, value) -> {
+              if (encryptedKeys == null) {
+                credentials.put(key, value);
+              } else if (encryptedKeys.equals("all")) {
+                credentials.put(key, encryptionUtils.decrypt(value));
+              } else {
+                List<String> encryptedFieldList =
+                    Arrays.stream(encryptedKeys.split(",")).collect(Collectors.toList());
+                if (encryptedFieldList.contains(key)) {
+                  credentials.put(key, encryptionUtils.decrypt(value));
+                } else {
+                  credentials.put(key, value);
+                }
+              }
+            });
+    return credentials;
   }
 }

@@ -12,12 +12,10 @@ public enum UserRole {
           Feature.ADD_ANY_USER,
           Feature.UPDATE_ANY_USER,
           Feature.REMOVE_ANY_USER,
-          Feature.ANY_FILE_DOWNLOAD,
-          Feature.ANY_FILE_UPLOAD,
-          Feature.ANY_FILE_REMOVE,
           Feature.CONFIGURE_CLOUD_PLATFORM,
           Feature.ADD_NEW_CONFIGURATIONS,
-          Feature.FULL_ACCESS);
+          Feature.GET_CLIENT_BY_ID,
+          Feature.GET_CLIENTS);
     }
   },
   CLIENT_ADMIN {
@@ -25,14 +23,14 @@ public enum UserRole {
       return Arrays.asList(
           Feature.GET_CLIENT_SPECIFIC_USER,
           Feature.ADD_CLIENT_SPECIFIC_USER,
-          Feature.UPDATE_CLIENT_SPECIFIC_USER,
-          Feature.REMOVE_CLIENT_SPECIFIC_USER,
           Feature.CLIENT_SPECIFIC_FILE_DOWNLOAD,
           Feature.CLIENT_SPECIFIC_FILE_UPLOAD,
           Feature.CLIENT_SPECIFIC_FILE_REMOVE,
           Feature.CLIENT_SPECIFIC_ACCESS,
           Feature.CONFIGURE_CLOUD_PLATFORM,
-          Feature.ADD_NEW_CONFIGURATIONS);
+          Feature.ADD_NEW_CONFIGURATIONS,
+          Feature.GET_CLIENT_BY_ID,
+          Feature.GET_VFS_DATA);
     }
   },
   USER {
@@ -41,13 +39,16 @@ public enum UserRole {
           Feature.USER_SPECIFIC_FILE_DOWNLOAD,
           Feature.USER_SPECIFIC_FILE_UPLOAD,
           Feature.USER_SPECIFIC_FILE_REMOVE,
-          Feature.USER_SPECIFIC_ACCESS);
+          Feature.USER_SPECIFIC_ACCESS,
+          Feature.GET_VFS_DATA,
+          Feature.TEMP_DOWNLOAD_ACCESS);
     }
   },
 
   TEMP_USER {
     public List<Feature> allowedFeatures() {
-      return Arrays.asList(Feature.USER_SPECIFIC_FILE_DOWNLOAD, Feature.TEMP_USER_ACCESS);
+      return Arrays.asList(
+          Feature.USER_SPECIFIC_FILE_DOWNLOAD, Feature.TEMP_DOWNLOAD_ACCESS, Feature.GET_VFS_DATA);
     }
   };
 

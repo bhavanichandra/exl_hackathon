@@ -14,5 +14,6 @@ import java.util.Map;
 public class AuthenticationConfiguration {
 
   private String cloudName;
-  private Map<String, Object> credentials;
+  private String encryptedKeys;
+  private Map<String, String> credentials;
 }

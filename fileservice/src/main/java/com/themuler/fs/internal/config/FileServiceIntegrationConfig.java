@@ -1,15 +1,18 @@
 package com.themuler.fs.internal.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.themuler.fs.api.CloudPlatform;
+import com.themuler.fs.api.OperationConstants;
 import com.themuler.fs.internal.service.IntegrationServiceInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
+import org.springframework.integration.handler.LoggingHandler;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
 @Configuration
@@ -25,11 +28,6 @@ public class FileServiceIntegrationConfig {
   }
 
   @Bean
-  public MessageChannel healthCheck() {
-    return MessageChannels.direct().get();
-  }
-
-  @Bean
   public MessageChannel inputChannel() {
     return MessageChannels.direct().get();
   }
@@ -42,37 +40,39 @@ public class FileServiceIntegrationConfig {
   @Bean
   public IntegrationFlow routerFlow() {
     return IntegrationFlows.from(this.inputChannel())
-        .log()
+        .log(
+            LoggingHandler.Level.INFO,
+            "com.themuler.fs.internal.config.FileServiceIntegrationConfig",
+            "headers.operation")
         .route(
             "headers.operation",
             operationRouter ->
                 operationRouter
-                    .channelMapping("health", "healthCheck")
-                    .channelMapping("upload", "uploadChannel")
-                    .channelMapping("download", "downloadChannel"))
+                    .channelMapping(OperationConstants.UPLOAD, "uploadChannel")
+                    .channelMapping(OperationConstants.DOWNLOAD, "downloadChannel")
+                    .channelMapping(OperationConstants.TEMP_DOWNLOAD, "tempDownloadChannel"))
         .get();
-  }
-
-  @Bean
-  public IntegrationFlow healthCheckFlow() {
-    return IntegrationFlows.from(this.healthCheck()).transform(m -> "Working Fine").get();
   }
 
   @Bean
   public IntegrationFlow uploadFlow() {
     return IntegrationFlows.from(this.uploadChannel())
+        .log(
+            LoggingHandler.Level.INFO,
+            "com.themuler.fs.internal.config.FileServiceIntegrationConfig",
+            "payload")
         .route(
             "headers.cloud",
             cloudRouter ->
                 cloudRouter
                     .subFlowMapping(
-                        "aws",
-                        awsFlow -> awsFlow.log().handle(integrationServiceInterface, "uploadToAws"))
+                        CloudPlatform.AWS,
+                        awsFlow -> awsFlow.handle(integrationServiceInterface, "uploadToAws"))
                     .subFlowMapping(
-                        "azure",
+                        CloudPlatform.AZURE,
                         azureFlow -> azureFlow.handle(integrationServiceInterface, "uploadToAzure"))
                     .subFlowMapping(
-                        "gcp",
+                        CloudPlatform.GOOGLE_CLOUD_PLATFORM,
                         gcpFlow -> gcpFlow.handle(integrationServiceInterface, "uploadToGcp")))
         .get();
   }
@@ -87,15 +87,31 @@ public class FileServiceIntegrationConfig {
             router ->
                 router
                     .subFlowMapping(
-                        "aws",
+                        CloudPlatform.NONE,
+                        nullFlow ->
+                            nullFlow.transform("payload"))
+                    .subFlowMapping(
+                        CloudPlatform.AWS,
                         awsFlow -> awsFlow.handle(integrationServiceInterface, "downloadFromAws"))
                     .subFlowMapping(
-                        "azure",
+                        CloudPlatform.AZURE,
                         azureFlow ->
                             azureFlow.handle(integrationServiceInterface, "downloadFromAzure"))
                     .subFlowMapping(
-                        "gcp",
+                        CloudPlatform.GOOGLE_CLOUD_PLATFORM,
                         gcpFlow -> gcpFlow.handle(integrationServiceInterface, "downloadFromGcp")))
+        .get();
+  }
+
+  @Bean("tempDownloadChannel")
+  public MessageChannel tempDownloadChannel() {
+    return MessageChannels.direct().get();
+  }
+
+  @Bean
+  public IntegrationFlow tempDownloadFlow() {
+    return IntegrationFlows.from("tempDownloadChannel")
+        .handle(integrationServiceInterface, "temporaryDownload")
         .get();
   }
 }

@@ -3,6 +3,7 @@ package com.themuler.fs.internal.controller;
 import com.themuler.fs.api.LoginResponse;
 import com.themuler.fs.api.LoginUser;
 import com.themuler.fs.api.ResponseWrapper;
+import com.themuler.fs.internal.model.AppUser;
 import com.themuler.fs.internal.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -26,5 +27,20 @@ public class LoginController {
       return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(loginResponse);
     }
     return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(loginResponse);
+  }
+
+  @PostMapping(path = "/register")
+  @ResponseBody
+  public ResponseEntity<ResponseWrapper<AppUser>> register(@RequestBody LoginUser loginUser) {
+    var loginResponse = this.userService.newSuperUser(loginUser);
+    if (!loginResponse.getSuccess()) {
+      return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(loginResponse);
+    }
+    return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(loginResponse);
+  }
+
+  @GetMapping(path = "/health")
+  public ResponseEntity<String> healthCheck() {
+    return ResponseEntity.ok("UP");
   }
 }

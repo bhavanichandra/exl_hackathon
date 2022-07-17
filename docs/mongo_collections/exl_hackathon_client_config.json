@@ -1,0 +1,65 @@
+[
+  {
+    "_id": {"$oid": "62d3fc93a60fc76a94e44601"},
+    "_class": "com.themuler.fs.internal.model.ClientConfiguration",
+    "client_id": "62d3fc81a60fc76a9a3rfs4e44600",
+    "credentials": {
+      "default_bucket_name": "exl-hackthon",
+      "client_secret": "exI9crk6SHjI/44pB2fagB/umFyJZGavcWboQOvl1shP26X4F/xTllzICiPn5yw3",
+      "client_id": "L9tRrfLcS/GJ0gYk0Ff3wedOIMX+24c3x7wss2CB81UNso9s="
+    },
+    "encryptedFields": "client_id,client_secret",
+    "environment": "dev"
+  },
+  {
+    "_id": {"$oid": "62d40920543d4b703d458f89"},
+    "_class": "com.themuler.fs.internal.model.ClientConfiguration",
+    "client_id": "62d3fdbad19eec05109b9972",
+    "credentials": {
+      "sas_token": "7OnWKqt9Aed4P3OasdtdVulNWTPSwhgzThK4SkfSVCsf2QFgcpEpwR21IYgPyqP+56irJye2aEmn1KIz4ye19YyfsrPwtMtgyGd3n1tFJ713H7qFOf4gYS48WPlv30ktzaLLjcuwNkWepndMOk3ZlXV8T64B5wlv1e9hqDfQ9pRLnk27WMi3niGloS9CSSMVfW7S5BOAsWEk4E3kRZpxTE2faO8dgPh4Ui7a92Y/0/7FRC3Qk2JWiriTqx4KF7oYoqy",
+      "tenant_id": "Z6x/4/s55edasZkdsaG3cUUQl2xYZH8I9ysrUZ0po3Bs026RI3IweEaiQ4z64ZAXLGLl3I",
+      "grant_type": "xa001L2QqB0NxxckfJ0RivrUepQ4LsZgACtHnsatDOw=",
+      "scope": "hpHGH1CLgHWJfsxwdasdase3SWAC7sYiQtsY5UkSrXWUpEqzpy/hz5rblJ8/ckeHPEy+qd",
+      "default_bucket_name": "zU/AnxdasHVwcB9zZVZ5KGDdCi93aNGtO8Z6e3sm6XpsVU=",
+      "client_secret": "ltONvr73x+ov0s2R2raubNTVI3GopEj+luyCt+exlFNHU6kMHyPsmjSiq0lJIF0u",
+      "storage_account": "jWnUJwaheGuh1rD2tdtVBw==",
+      "client_id": "tLfpX++InTxalzhuDLCArmziOYk5nWYo3SP15XFjzQabX/W/TWB/4/0MeMqrzPUY",
+      "connection_string": "OatYqby9ddsa82ZknE3YqqpsmX67BVGKS5Xn9Ks4bElUiWUqQKtWhbvDkAvbz8vN946Os8A6fz4u36u/z+N0V7YJ7562z4zC6/xARvOPiQ9rZIo3A9ol2YOzr+7T9tUjuf9Pbh0ZdibJ5DIU2gJude09LOqY4PaxCpcXYjirWgf8D0vSuDC5nOom5bVWBheah71HaMOBrsZxCbRQZoUIkLThukD0BosqmjjIaxW8csUlENrM9IVQjN4j8mIji8zOTkB"
+    },
+    "encryptedFields": "all",
+    "environment": "dev"
+  },
+  {
+    "_id": {"$oid": "62d409a3543d4b703d458f8a"},
+    "_class": "com.themuler.fs.internal.model.ClientConfiguration",
+    "client_id": "62d3fe7e7884865e90a6ca84",
+    "credentials": {
+      "token_uri": "1XHlbbQvUH+TtnKTydasZU2RLD6PK9/g7GJeRDwZNABGi3N73RmMRZJhDYdqkQf1cTK",
+      "private_key_id": "ESQ3TE8wXNsDkg74rOKKHDp68/xtQ3lIt0g5KmeATIwVySA82l5LE4lAkosjd+8Z",
+      "client_x509_cert_url": "MNRmF4hdasyWhvdGOTlgw5LwxfhAHIQDtAyqNKbyaDhHzuUjwf+JDD2ZrNOVeGpXp40PNsAFcyyGJDeWEBM0rYTDUBb8Pm5Y73BdHext5jN6cVr0L+ZjHAsrJV7uof7kLEg9uhNktFIz6mEeCm4j5ICMsCBOLvy5zrW4yi0HIlaEuM=",
+      "project_id": "BQXnpCm2GhP+oZL5YXz/QldasX83Jj3gkfhBc5ZUNjh+Zw=",
+      "auth_uri": "oa3y/GhnZ7/ibXnTeU1eSC7njxcM6hdJzPWuFmngRZvjIfrpo25DYymYSzfe1wwU",
+      "auth_provider_x509_cert_url": "MNRmF4hyWhvdGOTlgw5Lwxq0U71KvVQI7593/HUnTopX1UjVqSqKF1V9uwfkaw3B",
+      "client_email": "+6HJfR32jcLkXdasagmwMPyEYUv8xbN9cpfsaBycsV6L05FC1PBrXsppl59si/fqiCXpuW9yPCd586YLer15Uj2TA==",
+      "default_bucket_name": "jWnUJwaheGuh1rD2tdtVBw==",
+      "private_key": "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",
+      "storage_account": "BQXnpCm2GhP+oZL5YXz/QlX83Jjasddsa3gkfhBc5ZUNjh+Zw=",
+      "type": "ntjCbOV1n6eU9YgeXGHuJA==",
+      "client_id": "DeBw1eM5TZOggVnFc8w95m6dsaxhhggiicOWORyT1YpsOQ="
+    },
+    "encryptedFields": "all",
+    "environment": "dev"
+  },
+  {
+    "_id": {"$oid": "62d461ca5e89be4adas03aa2fcf"},
+    "_class": "com.themuler.fs.internal.model.ClientConfiguration",
+    "client_id": "62d40725543d4b703d4das58f87",
+    "credentials": {
+      "default_bucket_name": "1IUm8r/VidasUCLHrt56LIN1g==",
+      "client_secret": "exI9crk6SHjI/44pdasB2fagB/umFyJZGavcWboQOvl1shP26X4F/xTllzICiPn5yw3",
+      "client_id": "L9tRrfLcS/GJ0gYk0FOIdasMX+24c3x7wss2CB81UNso9s="
+    },
+    "encryptedFields": "all",
+    "environment": "dev"
+  }
+]

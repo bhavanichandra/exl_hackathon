@@ -1,19 +1,18 @@
 package com.themuler.fs.internal.service.user;
 
-import com.themuler.fs.api.LoginResponse;
-import com.themuler.fs.api.NewUser;
-import com.themuler.fs.api.ResponseWrapper;
-import com.themuler.fs.api.UserRole;
+import com.themuler.fs.api.*;
 import com.themuler.fs.internal.model.AppUser;
 import com.themuler.fs.internal.model.Client;
+import com.themuler.fs.internal.model.VirtualFileSystem;
 import com.themuler.fs.internal.repository.ClientRepository;
 import com.themuler.fs.internal.repository.UserRepository;
+import com.themuler.fs.internal.repository.VFSRepository;
 import com.themuler.fs.internal.service.auth.JWTServiceInterface;
+import com.themuler.fs.internal.service.utility.EncryptionUtils;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -26,7 +25,11 @@ public class UserService implements UserServiceInterface {
 
   private final ClientRepository clientRepository;
 
+  private final VFSRepository vfsRepository;
+
   private final JWTServiceInterface jwtService;
+
+  private final EncryptionUtils encryptionUtils;
 
   @Override
   public ResponseWrapper<AppUser> saveUser(NewUser newUser) {
@@ -39,12 +42,12 @@ public class UserService implements UserServiceInterface {
             new AppUser(
                 null,
                 newUser.getEmail(),
-                newUser.getPassword(),
+                encryptionUtils.encrypt(newUser.getPassword()),
                 newUser.getName(),
                 client,
-                UserRole.CLIENT_ADMIN);
+                newUser.getRole());
       }
-      AppUser savedUser = this.userRepository.insert(user);
+      AppUser savedUser = this.userRepository.save(user);
       builder.message("User saved / updated successfully");
       builder.success(true);
       builder.payload(savedUser);
@@ -58,8 +61,7 @@ public class UserService implements UserServiceInterface {
 
   @Override
   public ResponseWrapper<List<AppUser>> getAllUsers() {
-    List<AppUser> users = new ArrayList<>();
-    this.userRepository.findAll().forEach(users::add);
+    List<AppUser> users = this.userRepository.findAll();
     return ResponseWrapper.<List<AppUser>>builder()
         .message("Successfully get users")
         .success(true)
@@ -94,7 +96,8 @@ public class UserService implements UserServiceInterface {
           .payload(null)
           .build();
     }
-    if (!user.getPassword().equals(password)) {
+    String decryptedPassword = encryptionUtils.decrypt(user.getPassword());
+    if (!decryptedPassword.equals(password)) {
       return ResponseWrapper.<LoginResponse>builder()
           .message("Invalid password")
           .success(false)
@@ -108,7 +111,7 @@ public class UserService implements UserServiceInterface {
             .token(token)
             .user(user)
             .permissions(
-                UserRole.valueOf(user.getName()).allowedFeatures().stream()
+                user.getRole().allowedFeatures().stream()
                     .map(Enum::toString)
                     .collect(Collectors.toList()))
             .build();
@@ -116,6 +119,40 @@ public class UserService implements UserServiceInterface {
         .message("Login Successful")
         .success(true)
         .payload(loginResponse)
+        .build();
+  }
+
+  @Override
+  public ResponseWrapper<AppUser> newSuperUser(LoginUser user) {
+    AppUser appUser =
+        AppUser.builder()
+            .client(null)
+            .email(user.getEmail())
+            .password(encryptionUtils.encrypt(user.getPassword()))
+            .role(UserRole.SUPER_ADMIN)
+            .build();
+    AppUser savedUser = this.userRepository.save(appUser);
+    return ResponseWrapper.<AppUser>builder()
+        .payload(savedUser)
+        .success(true)
+        .message("Super Admin created")
+        .build();
+  }
+
+  @Override
+  public ResponseWrapper<List<VirtualFileSystem>> getUploadedFileDetails(String user_id) {
+    Optional<AppUser> user = this.userRepository.findById(new ObjectId(user_id));
+    if (user.isEmpty()) {
+      return ResponseWrapper.<List<VirtualFileSystem>>builder()
+          .message("User Doesn't exists")
+          .success(false)
+          .payload(null)
+          .build();
+    }
+    return ResponseWrapper.<List<VirtualFileSystem>>builder()
+        .payload(this.vfsRepository.findAllByClientAndUser(user.get().getClient(), user.get()))
+        .success(true)
+        .message("Fetched VFS data")
         .build();
   }
 }

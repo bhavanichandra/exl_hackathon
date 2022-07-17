@@ -1,0 +1,98 @@
+[
+  {
+    "_id": {"$oid": "62d446a550367d12ce823031"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exl-hackathon-data",
+    "client_id": {"$oid": "62d3fdbad19eec05109b9972"},
+    "cloudPath": "exl-hackathon-data/demo.zip",
+    "cloudPlatform": "AZURE",
+    "fileName": "demo.zip",
+    "status": "uploaded",
+    "user_id": {"$oid": "62d4456adc8117247cd8901b"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d448553cdd3d1244ae5508"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exl-hackathon-data",
+    "client_id": {"$oid": "62d3fdbad19eec05109b9972"},
+    "cloudPath": "exl-hackathon-data/Zoho_app_idea-Page-1.png",
+    "cloudPlatform": "AZURE",
+    "fileName": "Zoho_app_idea-Page-1.png",
+    "status": "uploaded",
+    "user_id": {"$oid": "62d4456adc8117247cd8901b"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d4497648e05215a1178e25"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exlhackathon",
+    "client_id": {"$oid": "62d3fe7e7884865e90a6ca84"},
+    "cloudPath": "exlhackathon/100MB.bin",
+    "cloudPlatform": "GOOGLE_CLOUD_PLATFORM",
+    "fileName": "100MB.bin",
+    "status": "upload successful",
+    "user_id": {"$oid": "62d44591dc8117247cd8901c"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d449c26e682d49fc6a2927"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exlhackathon",
+    "client_id": {"$oid": "62d3fe7e7884865e90a6ca84"},
+    "cloudPath": "exlhackathon/WVP-CommonServicesHigh-LevelDesign-040522-0234.pdf",
+    "cloudPlatform": "GOOGLE_CLOUD_PLATFORM",
+    "fileName": "WVP-CommonServicesHigh-LevelDesign-040522-0234.pdf",
+    "status": "upload successful",
+    "user_id": {"$oid": "62d44591dc8117247cd8901c"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d461e25e89be4a03aa2fd0"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exl-hackthon",
+    "client_id": {"$oid": "62d40725543d4b703d458f87"},
+    "cloudPath": "data/db-1.png",
+    "cloudPlatform": "AWS",
+    "fileName": "db-1.png",
+    "status": "uploaded",
+    "user_id": {"$oid": "62d45f1a5d646e13e395479c"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d46213d548827f3034ffa2"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exl-hackthon",
+    "client_id": {"$oid": "62d40725543d4b703d458f87"},
+    "cloudPath": "data/db-8.png",
+    "cloudPlatform": "AWS",
+    "fileName": "db-8.png",
+    "status": "uploaded",
+    "user_id": {"$oid": "62d45f1a5d646e13e395479c"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d4621ad548827f3034ffa3"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exl-hackthon",
+    "client_id": {"$oid": "62d40725543d4b703d458f87"},
+    "cloudPath": "data/db-3.png",
+    "cloudPlatform": "AWS",
+    "fileName": "db-3.png",
+    "status": "uploaded",
+    "user_id": {"$oid": "62d45f1a5d646e13e395479c"},
+    "vfsType": "File"
+  },
+  {
+    "_id": {"$oid": "62d4621fd548827f3034ffa4"},
+    "_class": "com.themuler.fs.internal.model.VirtualFileSystem",
+    "bucketName": "exl-hackthon",
+    "client_id": {"$oid": "62d40725543d4b703d458f87"},
+    "cloudPath": "data/db-10.png",
+    "cloudPlatform": "AWS",
+    "fileName": "db-10.png",
+    "status": "uploaded",
+    "user_id": {"$oid": "62d45f1a5d646e13e395479c"},
+    "vfsType": "File"
+  }
+]

@@ -1,5 +1,6 @@
 package com.themuler.fs.internal.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,28 +19,28 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class VirtualFileSystem {
 
   @Id private ObjectId id;
-
   @Indexed
   @BsonProperty(value = "file_name")
   private String fileName;
-
   @BsonProperty(value = "cloud_path")
   private String cloudPath;
-
   @BsonProperty(value = "stored_bucket_name")
   private String bucketName;
-
   private String status;
-
   private String cloudPlatform;
-
   @BsonProperty(value = "local_path")
   private String localPath;
-
   @BsonProperty(value = "vfs_type")
   private String vfsType;
-
   @Field("client_id")
   @DocumentReference(collection = "client")
   private Client client;
+  @Field("user_id")
+  @DocumentReference(collection = "user")
+  private AppUser user;
+
+
+  public String getId() {
+    return id.toString();
+  }
 }
