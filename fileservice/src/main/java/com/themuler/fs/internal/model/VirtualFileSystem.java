@@ -34,6 +34,10 @@ public class VirtualFileSystem {
   @Field("client_id")
   @DocumentReference(collection = "client")
   private Client client;
+  @Field("user_id")
+  @DocumentReference(collection = "user")
+  private AppUser user;
+
 
   public String getId() {
     return id.toString();

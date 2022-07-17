@@ -31,14 +31,16 @@ public class LoginController {
 
   @PostMapping(path = "/register")
   @ResponseBody
-  public ResponseEntity<ResponseWrapper<AppUser>> register(
-          @RequestBody LoginUser loginUser) {
-    var loginResponse =
-            this.userService.newSuperUser(loginUser);
+  public ResponseEntity<ResponseWrapper<AppUser>> register(@RequestBody LoginUser loginUser) {
+    var loginResponse = this.userService.newSuperUser(loginUser);
     if (!loginResponse.getSuccess()) {
       return ResponseEntity.status(401).contentType(MediaType.APPLICATION_JSON).body(loginResponse);
     }
     return ResponseEntity.status(200).contentType(MediaType.APPLICATION_JSON).body(loginResponse);
   }
 
+  @GetMapping(path = "/health")
+  public ResponseEntity<String> healthCheck() {
+    return ResponseEntity.ok("UP");
+  }
 }

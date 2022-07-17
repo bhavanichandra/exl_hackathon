@@ -25,7 +25,6 @@ public class FileServiceConfig {
 
   @Bean
   public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-    AuthenticationManager sharedObject = http.getSharedObject(AuthenticationManager.class);
     http.cors()
         .and()
         .csrf()

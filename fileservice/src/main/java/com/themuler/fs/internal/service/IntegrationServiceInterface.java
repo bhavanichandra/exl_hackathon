@@ -1,6 +1,7 @@
 package com.themuler.fs.internal.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.themuler.fs.api.CloudPlatform;
 import com.themuler.fs.api.DownloadAPIRequest;
 import org.springframework.messaging.Message;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 public interface IntegrationServiceInterface {
   Object uploadToAws(Message<Map<String, Object>> message);
 
-  Message<String> getDownloadLocation(DownloadAPIRequest request);
+  Message<CloudPlatform> getDownloadLocation(DownloadAPIRequest request);
   Object downloadFromAws(Message<String> message);
 
   Object downloadFromAzure(Message<?> message);
@@ -18,8 +19,8 @@ public interface IntegrationServiceInterface {
   Object downloadFromGcp(Message<?> message) throws IOException;
 
 
-  Object uploadToAzure(Message<?> message) throws IOException;
+  Object uploadToAzure(Message<Map<String, Object>> message) throws IOException;
 
-  Object uploadToGcp(Message<?> message) throws IOException;
+  Object uploadToGcp(Message<Map<String, Object>> message) throws IOException;
 
 }
