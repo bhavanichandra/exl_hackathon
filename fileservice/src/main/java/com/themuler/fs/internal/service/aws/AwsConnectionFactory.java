@@ -1,9 +1,8 @@
 package com.themuler.fs.internal.service.aws;
 
-import com.themuler.fs.internal.model.ClientConfig;
-import com.themuler.fs.internal.repository.ClientConfigRepository;
-import com.themuler.fs.internal.repository.CloudPlatformRepository;
-import com.themuler.fs.internal.service.CredentialsService;
+import com.themuler.fs.internal.model.AuthenticationConfiguration;
+import com.themuler.fs.internal.model.AuthenticationData;
+import com.themuler.fs.internal.service.auth.AccessInterface;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,34 +11,30 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
-import javax.validation.Valid;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Component
 @RequiredArgsConstructor
 @Log4j2
 public class AwsConnectionFactory implements AwsCredentialsProvider {
 
-  private final CredentialsService credentialsService;
+  private final AccessInterface credentialsService;
 
-  private Map<String,Object> credential;
+  private Map<String, Object> credential;
 
   @Value("${environment.active}")
   private String environment;
 
   @Override
   public AwsCredentials resolveCredentials() {
-    List<Map<String, Object>> credentialsFromConfiguration =
-        this.credentialsService.getCredentialsFromConfiguration(environment);
+    AuthenticationData credentialsFromConfiguration =
+        this.credentialsService.getClientConfiguration(environment);
     Map<String, Object> credential =
-        credentialsFromConfiguration.stream()
-            .filter(each -> each.get("cloud").equals("aws"))
+        credentialsFromConfiguration.getConfigurations().stream()
+            .filter(each -> each.getCloudName().equals("aws"))
+            .map(AuthenticationConfiguration::getCredentials)
             .collect(Collectors.toList())
             .get(0);
     this.credential = credential;

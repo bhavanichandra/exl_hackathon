@@ -5,7 +5,6 @@ import com.themuler.fs.api.Feature;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.gateway.FileServiceMessageGateway;
 import com.themuler.fs.internal.model.User;
-import com.themuler.fs.internal.service.IntegrationServiceInterface;
 import com.themuler.fs.internal.service.auth.AccessInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
