@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 public enum CloudPlatform {
   AWS("aws"),
   AZURE("azure"),
-  GOOGLE_CLOUD_PLATFORM("gcp");
+  GOOGLE_CLOUD_PLATFORM("gcp"),
+
+  NONE("invalid");
 
   private final String cloudPlatform;
 

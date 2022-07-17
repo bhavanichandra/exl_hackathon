@@ -16,13 +16,16 @@ import com.themuler.fs.api.DownloadAPIRequest;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.model.AppUser;
 import com.themuler.fs.internal.model.ClientConfiguration;
+import com.themuler.fs.internal.model.TempDownload;
 import com.themuler.fs.internal.model.VirtualFileSystem;
+import com.themuler.fs.internal.repository.TempDownloadRepository;
 import com.themuler.fs.internal.repository.VFSRepository;
 import com.themuler.fs.internal.service.utility.EncryptionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
@@ -39,14 +42,14 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,8 +61,13 @@ public class IntegrationService implements IntegrationServiceInterface {
 
   private final EncryptionUtils encryptionUtils;
 
+  private final TempDownloadRepository tempDownloadRepository;
+
   @Value("${download.link.active.time}")
   private long durationInMinutes;
+
+  @Value("${temp.location}")
+  private String tempLocation;
 
   private S3Client getS3Client(Map<String, String> decryptCredentials) {
     return S3Client.builder()
@@ -167,20 +175,20 @@ public class IntegrationService implements IntegrationServiceInterface {
     Response<BlockBlobItem> blockBlobItemResponse =
         blobClient.uploadWithResponse(options, Duration.ofMinutes(10), Context.NONE);
     long statusCode = blockBlobItemResponse.getStatusCode();
-    if (statusCode != 200) {
-      vfs.setStatus("failed");
-      return ResponseWrapper.<VirtualFileSystem>builder()
-          .success(false)
-          .payload(vfs)
-          .message("Upload Failed")
-          .build();
+    String status = "uploaded";
+    String msg = "Upload Success";
+    boolean success = true;
+    if (statusCode != 201) {
+      status = "failed";
+      msg = "Upload Failed.Status code: " + statusCode;
+      success = false;
     }
-    vfs.setStatus("upload successful");
+    vfs.setStatus(status);
     vfsRepository.save(vfs);
     return ResponseWrapper.<VirtualFileSystem>builder()
-        .success(true)
+        .success(success)
         .payload(vfs)
-        .message("Upload successful")
+        .message(msg)
         .build();
   }
 
@@ -198,10 +206,10 @@ public class IntegrationService implements IntegrationServiceInterface {
     String contentType = (String) payload.get("contentType");
     VirtualFileSystem vfs = new VirtualFileSystem();
     vfs.setVfsType("File");
+    vfs.setCloudPath(default_bucket_name + "/" + fileName);
     vfs.setBucketName(default_bucket_name);
     vfs.setCloudPlatform(CloudPlatform.GOOGLE_CLOUD_PLATFORM.name());
     vfs.setStatus("in_progress");
-    vfs.setCloudPlatform(default_bucket_name + "/" + fileName);
     vfs.setFileName(fileName);
     AppUser user = new ObjectMapper().convertValue(payload.get("appUser"), AppUser.class);
     vfs.setClient(user.getClient());
@@ -233,10 +241,10 @@ public class IntegrationService implements IntegrationServiceInterface {
         channel.write(ByteBuffer.wrap(bytes));
         channel.close();
       }
-      vfs.setStatus("upload successful");
+      vfs.setStatus("Uploaded");
     } catch (Exception ex) {
       ex.printStackTrace();
-      vfs.setStatus("failed");
+      vfs.setStatus("Failed");
       return ResponseWrapper.<VirtualFileSystem>builder()
           .payload(vfs)
           .success(false)
@@ -252,13 +260,20 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Message<CloudPlatform> getDownloadLocation(DownloadAPIRequest request) {
-    VirtualFileSystem vfs = vfsRepository.findByFileNameLikeIgnoreCase(request.getFileName());
-    CloudPlatform cloudPlatform =
-        Arrays.stream(CloudPlatform.values())
-            .filter(each -> each.getCloudPlatform().equals(vfs.getCloudPlatform()))
-            .collect(Collectors.toList())
-            .get(0);
+  public Message<CloudPlatform> getDownloadLocation(Message<DownloadAPIRequest> message) {
+    DownloadAPIRequest request = message.getPayload();
+    AppUser appUser = message.getHeaders().get("appUser", AppUser.class);
+    assert appUser != null;
+    VirtualFileSystem vfs =
+        vfsRepository.findByFileNameLikeIgnoreCaseAndClient(
+            request.getFileName(), appUser.getClient());
+    if (vfs == null) {
+      return MessageBuilder.withPayload(CloudPlatform.NONE)
+          .copyHeaders(message.getHeaders())
+          .build();
+    }
+    log.info("headers: {}", message.getHeaders());
+    CloudPlatform cloudPlatform = CloudPlatform.valueOf(vfs.getCloudPlatform());
     return MessageBuilder.withPayload(cloudPlatform)
         .setHeader("path", vfs.getCloudPath())
         .setHeader("fileName", vfs.getFileName())
@@ -268,7 +283,7 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object downloadFromAws(Message<String> message) {
+  public ResponseEntity<?> downloadFromAws(Message<String> message) {
     MessageHeaders headers = message.getHeaders();
     String path = headers.get("path", String.class);
     String bucket = headers.get("bucketName", String.class);
@@ -290,6 +305,7 @@ public class IntegrationService implements IntegrationServiceInterface {
           .body(fileOut.toByteArray());
 
     } catch (Exception ex) {
+      ex.printStackTrace();
       return ResponseEntity.internalServerError()
           .body(
               ResponseWrapper.builder()
@@ -301,7 +317,7 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object downloadFromGcp(Message<?> message) throws IOException {
+  public ResponseEntity<?> downloadFromGcp(Message<?> message) throws IOException {
     MessageHeaders headers = message.getHeaders();
     ClientConfiguration configuration =
         message.getHeaders().get("credentials", ClientConfiguration.class);
@@ -349,7 +365,7 @@ public class IntegrationService implements IntegrationServiceInterface {
   }
 
   @Override
-  public Object downloadFromAzure(Message<?> message) {
+  public ResponseEntity<?> downloadFromAzure(Message<?> message) {
     MessageHeaders headers = message.getHeaders();
     String fileName = headers.get("fileName", String.class);
     String path = headers.get("path", String.class);
@@ -394,6 +410,123 @@ public class IntegrationService implements IntegrationServiceInterface {
                   .payload(Map.of("message", e.getMessage()))
                   .success(false)
                   .message("Error Downloading file")
+                  .build());
+    }
+  }
+
+  @Override
+  public ResponseEntity<?> temporaryDownload(Message<DownloadAPIRequest> message)
+      throws IOException {
+    DownloadAPIRequest payload = message.getPayload();
+    AppUser appUser = message.getHeaders().get("appUser", AppUser.class);
+    String fileName = payload.getFileName();
+    String[] fileNameSplit = fileName.split("\\.(?=[^\\.]+$)");
+    String newFileName = fileNameSplit[0] + "-" + UUID.randomUUID() + "." + fileNameSplit[1];
+    assert appUser != null;
+    VirtualFileSystem vfs =
+        this.vfsRepository.findByFileNameLikeIgnoreCaseAndClient(fileName, appUser.getClient());
+    String bucketName = vfs.getBucketName();
+    if (payload.getBucketName() != null && !bucketName.equals(payload.getBucketName())) {
+      bucketName = payload.getBucketName();
+    }
+    TempDownload tempDownload =
+        TempDownload.initialize(newFileName, bucketName, vfs.getCloudPlatform());
+    Message<String> downloadRequest =
+        MessageBuilder.withPayload(vfs.getCloudPlatform())
+            .setHeader("path", vfs.getCloudPath())
+            .setHeader("fileName", vfs.getFileName())
+            .setHeader("bucketName", vfs.getBucketName())
+            .setHeader("vfsId", vfs.getId())
+            .copyHeadersIfAbsent(message.getHeaders())
+            .build();
+    ResponseEntity<?> downloadResponse;
+    switch (vfs.getCloudPlatform().toLowerCase(Locale.ROOT)) {
+      case "aws":
+        {
+          downloadResponse = this.downloadFromAws(downloadRequest);
+          break;
+        }
+      case "azure":
+        {
+          downloadResponse = this.downloadFromAzure(downloadRequest);
+          break;
+        }
+      case "gcp":
+        {
+          downloadResponse = this.downloadFromGcp(downloadRequest);
+          break;
+        }
+      default:
+        downloadResponse = null;
+        break;
+    }
+    if (downloadResponse == null) {
+      tempDownload.makeDownloadAvailable(null);
+      tempDownload.removeAccess();
+      tempDownloadRepository.save(tempDownload);
+      return ResponseEntity.internalServerError()
+          .body(
+              ResponseWrapper.builder()
+                  .message("no file found!")
+                  .success(false)
+                  .payload(null)
+                  .build());
+    }
+    if (downloadResponse.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+      tempDownload.makeDownloadAvailable(null);
+      tempDownload.removeAccess();
+      tempDownloadRepository.save(tempDownload);
+      return downloadResponse;
+    }
+    try {
+      byte[] fileBytes = (byte[]) downloadResponse.getBody();
+
+      File file = new File(this.tempLocation + newFileName);
+      boolean isFileCreated = file.createNewFile();
+      log.info("File Created? {} ", isFileCreated);
+      FileOutputStream fileOut = new FileOutputStream(file);
+      assert fileBytes != null;
+      fileOut.write(fileBytes);
+      fileOut.close();
+      String url = "http://localhost:8081/files/" + newFileName;
+      tempDownload.makeDownloadAvailable(url);
+      tempDownloadRepository.save(tempDownload);
+      ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
+      executorService.schedule(
+          () -> {
+            try {
+              File directory = new File(this.tempLocation);
+              for (File f : Objects.requireNonNull(directory.listFiles())) {
+                if (!f.isDirectory()) {
+                  f.delete();
+                }
+              }
+            } finally {
+              log.info("All Files are deleted.");
+              executorService.shutdown();
+            }
+          },
+          durationInMinutes,
+          TimeUnit.MINUTES);
+      return ResponseEntity.ok()
+          .body(
+              ResponseWrapper.builder()
+                  .payload(Map.of("url", url))
+                  .success(true)
+                  .message("Please download the file.Link works for 10min")
+                  .build());
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      tempDownload.makeDownloadAvailable(null);
+      tempDownload.removeAccess();
+      tempDownloadRepository.save(tempDownload);
+      return ResponseEntity.internalServerError()
+          .body(
+              ResponseWrapper.builder()
+                  .message("failed to download: " + ex.getMessage())
+                  .success(false)
+                  .payload(null)
                   .build());
     }
   }

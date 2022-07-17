@@ -3,8 +3,10 @@ package com.themuler.fs.internal.service.user;
 import com.themuler.fs.api.*;
 import com.themuler.fs.internal.model.AppUser;
 import com.themuler.fs.internal.model.Client;
+import com.themuler.fs.internal.model.VirtualFileSystem;
 import com.themuler.fs.internal.repository.ClientRepository;
 import com.themuler.fs.internal.repository.UserRepository;
+import com.themuler.fs.internal.repository.VFSRepository;
 import com.themuler.fs.internal.service.auth.JWTServiceInterface;
 import com.themuler.fs.internal.service.utility.EncryptionUtils;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ public class UserService implements UserServiceInterface {
   private final UserRepository userRepository;
 
   private final ClientRepository clientRepository;
+
+  private final VFSRepository vfsRepository;
 
   private final JWTServiceInterface jwtService;
 
@@ -41,7 +45,7 @@ public class UserService implements UserServiceInterface {
                 encryptionUtils.encrypt(newUser.getPassword()),
                 newUser.getName(),
                 client,
-                UserRole.CLIENT_ADMIN);
+                newUser.getRole());
       }
       AppUser savedUser = this.userRepository.save(user);
       builder.message("User saved / updated successfully");
@@ -132,6 +136,23 @@ public class UserService implements UserServiceInterface {
         .payload(savedUser)
         .success(true)
         .message("Super Admin created")
+        .build();
+  }
+
+  @Override
+  public ResponseWrapper<List<VirtualFileSystem>> getUploadedFileDetails(String user_id) {
+    Optional<AppUser> user = this.userRepository.findById(new ObjectId(user_id));
+    if (user.isEmpty()) {
+      return ResponseWrapper.<List<VirtualFileSystem>>builder()
+          .message("User Doesn't exists")
+          .success(false)
+          .payload(null)
+          .build();
+    }
+    return ResponseWrapper.<List<VirtualFileSystem>>builder()
+        .payload(this.vfsRepository.findAllByClientAndUser(user.get().getClient(), user.get()))
+        .success(true)
+        .message("Fetched VFS data")
         .build();
   }
 }

@@ -12,6 +12,7 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.handler.LoggingHandler;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
 @Configuration
@@ -39,10 +40,10 @@ public class FileServiceIntegrationConfig {
   @Bean
   public IntegrationFlow routerFlow() {
     return IntegrationFlows.from(this.inputChannel())
-            .log(
-                    LoggingHandler.Level.INFO,
-                    "com.themuler.fs.internal.config.FileServiceIntegrationConfig",
-                    "headers.operation")
+        .log(
+            LoggingHandler.Level.INFO,
+            "com.themuler.fs.internal.config.FileServiceIntegrationConfig",
+            "headers.operation")
         .route(
             "headers.operation",
             operationRouter ->
@@ -86,6 +87,10 @@ public class FileServiceIntegrationConfig {
             router ->
                 router
                     .subFlowMapping(
+                        CloudPlatform.NONE,
+                        nullFlow ->
+                            nullFlow.transform("payload"))
+                    .subFlowMapping(
                         CloudPlatform.AWS,
                         awsFlow -> awsFlow.handle(integrationServiceInterface, "downloadFromAws"))
                     .subFlowMapping(
@@ -95,6 +100,18 @@ public class FileServiceIntegrationConfig {
                     .subFlowMapping(
                         CloudPlatform.GOOGLE_CLOUD_PLATFORM,
                         gcpFlow -> gcpFlow.handle(integrationServiceInterface, "downloadFromGcp")))
+        .get();
+  }
+
+  @Bean("tempDownloadChannel")
+  public MessageChannel tempDownloadChannel() {
+    return MessageChannels.direct().get();
+  }
+
+  @Bean
+  public IntegrationFlow tempDownloadFlow() {
+    return IntegrationFlows.from("tempDownloadChannel")
+        .handle(integrationServiceInterface, "temporaryDownload")
         .get();
   }
 }

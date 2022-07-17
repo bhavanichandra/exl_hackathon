@@ -20,10 +20,14 @@ import java.util.List;
 @AllArgsConstructor
 @Document(value = "client")
 public class Client {
+
   @Id private ObjectId id;
+
   @Indexed private String name;
+
   @BsonProperty(value = "cloud_platform")
   private CloudPlatform cloudPlatform;
+
   @DocumentReference(collection = "client_config")
   private List<ClientConfiguration> clientConfigurations;
 

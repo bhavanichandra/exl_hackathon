@@ -16,5 +16,7 @@ public class DownloadAPIRequest {
 
   @NotNull @NotBlank private String fileName;
 
+  @Nullable  private String bucketName;
+
   @Nullable private Long vfs_id;
 }

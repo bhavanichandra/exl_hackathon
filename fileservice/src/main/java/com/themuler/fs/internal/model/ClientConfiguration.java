@@ -1,5 +1,8 @@
 package com.themuler.fs.internal.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIdentityReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +11,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import java.util.Map;
 
@@ -19,10 +23,14 @@ import java.util.Map;
 public class ClientConfiguration {
   @Id private ObjectId id;
 
-  @Indexed
-  private String environment;
+  @Indexed private String environment;
   private String encryptedFields;
   private Map<String, String> credentials;
+
+  @DocumentReference(collection = "client")
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class)
+  @JsonIdentityReference(alwaysAsId = true)
+  private Client client;
 
   public String getId() {
     return id.toString();

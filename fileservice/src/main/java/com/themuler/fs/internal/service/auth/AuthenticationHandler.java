@@ -29,7 +29,7 @@ public class AuthenticationHandler implements AccessInterface {
   public Boolean allowAccess(Feature feature) {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null) {
-      return null;
+      return false;
     }
     AppUser user = (AppUser) authentication.getPrincipal();
     return user.getRole().allowedFeatures().contains(feature);

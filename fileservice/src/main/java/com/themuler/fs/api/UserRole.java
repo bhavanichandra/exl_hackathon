@@ -29,7 +29,8 @@ public enum UserRole {
           Feature.CLIENT_SPECIFIC_ACCESS,
           Feature.CONFIGURE_CLOUD_PLATFORM,
           Feature.ADD_NEW_CONFIGURATIONS,
-          Feature.GET_CLIENT_BY_ID);
+          Feature.GET_CLIENT_BY_ID,
+          Feature.GET_VFS_DATA);
     }
   },
   USER {
@@ -38,13 +39,16 @@ public enum UserRole {
           Feature.USER_SPECIFIC_FILE_DOWNLOAD,
           Feature.USER_SPECIFIC_FILE_UPLOAD,
           Feature.USER_SPECIFIC_FILE_REMOVE,
-          Feature.USER_SPECIFIC_ACCESS);
+          Feature.USER_SPECIFIC_ACCESS,
+          Feature.GET_VFS_DATA,
+          Feature.TEMP_DOWNLOAD_ACCESS);
     }
   },
 
   TEMP_USER {
     public List<Feature> allowedFeatures() {
-      return Arrays.asList(Feature.USER_SPECIFIC_FILE_DOWNLOAD, Feature.TEMP_USER_ACCESS);
+      return Arrays.asList(
+          Feature.USER_SPECIFIC_FILE_DOWNLOAD, Feature.TEMP_DOWNLOAD_ACCESS, Feature.GET_VFS_DATA);
     }
   };
 

@@ -69,7 +69,7 @@ public class AdminService implements AdminInterface {
       return builder.message("No Client with id exists").success(false).payload(null).build();
     }
     Map<String, String> credentials;
-      String fieldsToEncrypt = clientConfiguration.getFieldsToEncrypt();
+    String fieldsToEncrypt = clientConfiguration.getFieldsToEncrypt();
     if (clientConfiguration.getPerformEncryption()) {
       if (fieldsToEncrypt.equalsIgnoreCase("all")) {
         Map<String, String> encryptedCredentials = new HashMap<>();
@@ -104,6 +104,7 @@ public class AdminService implements AdminInterface {
             .credentials(credentials)
             .encryptedFields(fieldsToEncrypt)
             .environment(clientConfiguration.getEnvironment())
+            .client(client)
             .build();
     ClientConfiguration savedConfig = this.clientConfigurationRepository.save(configuration);
     client.getClientConfigurations().add(savedConfig);

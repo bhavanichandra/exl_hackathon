@@ -8,7 +8,7 @@
 - Three functionalities should be provided at the very least, 
   - Upload API
   - Download API
-  - Download API with a time limite for a temp user.
+  - Download API with a time limit for a temp user.
 
 ## Soultion
 
@@ -31,6 +31,16 @@ For this solution I have included the two projects,
 - File Service: The actual API that does the solution.
 - Sql Scripts:  DDL scripts for the application, these can also be auto generated using hibernate properties, but I've included them with some master data. Please feel free to update them.
 - Secrets:  A folder containing the spring yml files. Sensitive data is encrypted using jaspyt.
+
+## Assumptions:
+
+These are the following assumptions for the solution.
+
+- Users will upload one file at a time: The solution is flexible enough to add extra logic to achieve this.
+- Cloud credentials are added during initial configuration.
+- There will be a super admin that will initiate the configuration
+- Only these operations are required: Download, Upload and Download for a temp user.
+- For temporary download, the file is downloaded to server and give server static url and start a timer to delete the file from local once timer is done.
 
 ## Solution Design
 
@@ -72,30 +82,19 @@ sequenceDiagram
 	
 ```
 
-- 
+## Application Architecture
+
+![Architecture](/Users/bhavanichandra/Downloads/Basic Architecture File Service.png)
+
+I'm using Java Spring Boot with Spring Integration. Currently the app contains two services
+
+- Config Server: Here all the configurations reside. Secrets are encrypted using Jaspyt.
+- FileService: This is the main app that acts as Client and Integration Service.
 
 
-
-# Encryption
-
-Generate openssl private key and public key using openssl.
-
-#### Private Key Command
-
-```bash
-openssl genrsa -aes128 -out fs_private_key.pem 4096
-```
-
-#### Public Key Generate Command
-
-```bash
-openssl rsa -in fs_private_key.pem  -pubout -out privkey.pub
-```
-
-Two files will be generated, which is used for encrypting and decrypting user login password, all credentials stored in database
 
 ## About Me
 
-Hi all, Just a small introduction, This is Bhavani Chandra. I'm a full stack developer at Jaggaer (Formerly, SciQuest). I'm a avid learner, belives in implementing solutions for problems that need a quick solution. 
+Hi all, Just a small introduction, This is Bhavani Chandra. I'm a full stack developer at Jaggaer (Formerly, SciQuest). I'm a avid learner, believes learning, doing. 
 
-Thanks to EXL for conducting this Hackathon. I'm really exited to submit a solution. 
+Thanks to EXL for conducting this Hackathon. I'm really exited to submit this solution. 
