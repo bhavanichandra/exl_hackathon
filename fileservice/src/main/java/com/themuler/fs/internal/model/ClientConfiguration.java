@@ -27,11 +27,6 @@ public class ClientConfiguration {
   private String encryptedFields;
   private Map<String, String> credentials;
 
-  @DocumentReference(collection = "client")
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class)
-  @JsonIdentityReference(alwaysAsId = true)
-  private Client client;
-
   public String getId() {
     return id.toString();
   }

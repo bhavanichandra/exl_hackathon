@@ -84,7 +84,7 @@ sequenceDiagram
 
 ## Application Architecture
 
-![Architecture](/docs/assets/architecture.png)
+![Architecture](/Users/bhavanichandra/personal/hackathon/exl_hackathon/docs/assets/architecture.png)
 
 I'm using Java Spring Boot with Spring Integration. Currently the app contains two services
 
