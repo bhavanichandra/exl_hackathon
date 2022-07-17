@@ -2,10 +2,11 @@ package com.themuler.fs.internal.controller;
 
 import com.themuler.fs.api.NewUser;
 import com.themuler.fs.api.ResponseWrapper;
-import com.themuler.fs.internal.model.User;
+import com.themuler.fs.internal.model.AppUser;
 import com.themuler.fs.internal.service.auth.AccessInterface;
 import com.themuler.fs.internal.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,13 +26,14 @@ public class UserController {
   @GetMapping(
       path = "/users",
       produces = {"application/json"})
-  public ResponseEntity<ResponseWrapper<List<User>>> getUsers() {
+  @ResponseBody
+  public ResponseEntity<ResponseWrapper<List<AppUser>>> getUsers() {
 
     boolean allowAccess = this.accessInterface.allowAccess(GET_ALL_USER);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
-              ResponseWrapper.<List<User>>builder()
+              ResponseWrapper.<List<AppUser>>builder()
                   .payload(null)
                   .success(false)
                   .message("Unauthorized Access")
@@ -43,21 +45,22 @@ public class UserController {
     if (!getUsers.getSuccess()) {
       status = 500;
     }
-    return ResponseEntity.status(status).body(getUsers);
+    return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(getUsers);
   }
 
   @GetMapping(
       path = "/users/{id}",
       consumes = {"application/json"},
       produces = {"application/json"})
-  public ResponseEntity<ResponseWrapper<User>> getUsers(@RequestParam long id) {
+  @ResponseBody
+  public ResponseEntity<ResponseWrapper<AppUser>> getUsers(@RequestParam String id) {
     boolean allowAccess =
         this.accessInterface.allowAccess(GET_CLIENT_SPECIFIC_USER)
             || this.accessInterface.allowAccess(GET_ALL_USER);
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
-              ResponseWrapper.<User>builder()
+              ResponseWrapper.<AppUser>builder()
                   .payload(null)
                   .success(false)
                   .message("Unauthorized Access")
@@ -68,14 +71,15 @@ public class UserController {
     if (!getUsersById.getSuccess()) {
       status = 404;
     }
-    return ResponseEntity.status(status).body(getUsersById);
+    return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(getUsersById);
   }
 
   @PostMapping(
       path = "/users",
       consumes = {"application/json"},
       produces = {"application/json"})
-  public ResponseEntity<ResponseWrapper<User>> saveUser(@RequestBody NewUser user) {
+  @ResponseBody
+  public ResponseEntity<ResponseWrapper<AppUser>> saveUser(@RequestBody NewUser user) {
 
     boolean allowAccess =
         this.accessInterface.allowAccess(ADD_ANY_USER)
@@ -85,7 +89,7 @@ public class UserController {
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
-              ResponseWrapper.<User>builder()
+              ResponseWrapper.<AppUser>builder()
                   .payload(null)
                   .success(false)
                   .message("Unauthorized Access")
@@ -96,6 +100,6 @@ public class UserController {
     if (!saveUser.getSuccess()) {
       status = 500;
     }
-    return ResponseEntity.status(status).body(saveUser);
+    return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(saveUser);
   }
 }

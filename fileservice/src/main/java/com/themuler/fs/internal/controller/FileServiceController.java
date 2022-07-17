@@ -4,7 +4,7 @@ import com.themuler.fs.api.DownloadAPIRequest;
 import com.themuler.fs.api.Feature;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.gateway.FileServiceMessageGateway;
-import com.themuler.fs.internal.model.User;
+import com.themuler.fs.internal.model.AppUser;
 import com.themuler.fs.internal.service.auth.AccessInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +49,7 @@ public class FileServiceController {
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
-              ResponseWrapper.<List<User>>builder()
+              ResponseWrapper.<List<AppUser>>builder()
                   .payload(null)
                   .success(false)
                   .message("Unauthorized Access")
@@ -99,7 +99,7 @@ public class FileServiceController {
     if (!allowAccess) {
       return ResponseEntity.status(403)
           .body(
-              ResponseWrapper.<List<User>>builder()
+              ResponseWrapper.<List<AppUser>>builder()
                   .payload(null)
                   .success(false)
                   .message("Unauthorized Access")

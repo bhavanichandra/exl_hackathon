@@ -22,8 +22,8 @@ public class NewUser {
 
   @NotNull @NotBlank private String role;
 
-  @JsonProperty("clientId")
+  @JsonProperty("client")
   @NotNull
   @NotBlank
-  private long clientId;
+  private String client;
 }
