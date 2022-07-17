@@ -3,3 +3,10 @@ spring:
     import: "configserver:"
   application:
     name: file-service
+
+  data:
+    mongodb:
+      username: "development"
+      password: "YhKtiE9jAgORNzKo"
+      host: cluster0.yerkz.mongodb.net
+      replica-set-name: atlas-uq1g8b-shard-0
