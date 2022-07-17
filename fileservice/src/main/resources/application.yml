@@ -3,3 +3,12 @@ spring:
     import: "configserver:"
   application:
     name: file-service
+
+
+  data:
+    mongodb:
+      uri: mongodb+srv://development:YhKtiE9jAgORNzKo@cluster0.yerkz.mongodb.net/exl_hackathon?authSource=admin
+
+encryption:
+  key: 1c7bf29acc0428dc
+  iv: 812ced23b1111e34

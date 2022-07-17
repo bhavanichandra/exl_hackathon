@@ -7,9 +7,7 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
-import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.*;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +15,13 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Document(value = "vfs")
 public class VirtualFileSystem {
 
-  @Id private ObjectId id;
+  @MongoId(targetType = FieldType.STRING)
+  @Id
+  private ObjectId id;
+
+  public String getId() {
+    return id.toString();
+  }
 
   @Indexed
   @BsonProperty(value = "file_name")

@@ -76,6 +76,24 @@ sequenceDiagram
 
 
 
+# Encryption
+
+Generate openssl private key and public key using openssl.
+
+#### Private Key Command
+
+```bash
+openssl genrsa -aes128 -out fs_private_key.pem 4096
+```
+
+#### Public Key Generate Command
+
+```bash
+openssl rsa -in fs_private_key.pem  -pubout -out privkey.pub
+```
+
+Two files will be generated, which is used for encrypting and decrypting user login password, all credentials stored in database
+
 ## About Me
 
 Hi all, Just a small introduction, This is Bhavani Chandra. I'm a full stack developer at Jaggaer (Formerly, SciQuest). I'm a avid learner, belives in implementing solutions for problems that need a quick solution. 

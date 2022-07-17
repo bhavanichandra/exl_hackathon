@@ -34,7 +34,7 @@ public class FileServiceConfig {
         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
         .authorizeRequests()
-        .antMatchers("/public/**", "/actuator/**")
+        .antMatchers("/public/**", "/actuator/**", "/swagger-ui.html")
         .permitAll()
         .and()
         .authorizeRequests()

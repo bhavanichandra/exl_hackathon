@@ -23,7 +23,5 @@ public class NewUser {
   @NotNull @NotBlank private String role;
 
   @JsonProperty("client")
-  @NotNull
-  @NotBlank
   private String client;
 }

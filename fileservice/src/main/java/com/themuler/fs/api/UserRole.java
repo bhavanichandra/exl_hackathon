@@ -16,8 +16,7 @@ public enum UserRole {
           Feature.ANY_FILE_UPLOAD,
           Feature.ANY_FILE_REMOVE,
           Feature.CONFIGURE_CLOUD_PLATFORM,
-          Feature.ADD_NEW_CONFIGURATIONS,
-          Feature.FULL_ACCESS);
+          Feature.ADD_NEW_CONFIGURATIONS);
     }
   },
   CLIENT_ADMIN {
@@ -32,7 +31,8 @@ public enum UserRole {
           Feature.CLIENT_SPECIFIC_FILE_REMOVE,
           Feature.CLIENT_SPECIFIC_ACCESS,
           Feature.CONFIGURE_CLOUD_PLATFORM,
-          Feature.ADD_NEW_CONFIGURATIONS);
+          Feature.ADD_NEW_CONFIGURATIONS,
+          Feature.ADD_NEW_CLIENTS);
     }
   },
   USER {

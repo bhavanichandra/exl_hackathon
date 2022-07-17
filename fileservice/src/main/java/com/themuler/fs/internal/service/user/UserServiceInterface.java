@@ -1,6 +1,7 @@
 package com.themuler.fs.internal.service.user;
 
 import com.themuler.fs.api.LoginResponse;
+import com.themuler.fs.api.LoginUser;
 import com.themuler.fs.api.NewUser;
 import com.themuler.fs.api.ResponseWrapper;
 import com.themuler.fs.internal.model.AppUser;
@@ -13,6 +14,7 @@ public interface UserServiceInterface {
 
   ResponseWrapper<List<AppUser>> getAllUsers();
 
+  ResponseWrapper<AppUser> newSuperUser(LoginUser user);
 
   ResponseWrapper<AppUser> getUserById(String id);
 
