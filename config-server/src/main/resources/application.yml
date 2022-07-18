@@ -11,11 +11,11 @@ spring:
           uri: https://github.com/bhavanichandra/exl_hackathon
           search-paths: secrets
           username: bhavanichandra
-          password: "Add-your-cipher-password-here"
+          password: "{cipher}AQCGb+rE4pH/m613gN1Ke68r8QQX+Jxp1Rl8Yy2npK+J/O08rw6wR4nKzb7D5a/asY3IrRSc6qJ1JhsebwAgJUnX/+3x3BszDtK62ahqEisemxR/lxuhe2W8v7LRQzhXUwiE3zBXMFn1LA6EzusQUcV31CPvL3rMWDRkmEDvIXea51AAnMx+J77gNuL2nuuJYPLitNPQ7SFrXs7MN3XmIXBokarWsX721s1iA8XqJzhaLMtISzg68Aila+j7pu5RY4tssyxMduDu2heWY0SmOeTzz1VEAedk+qfJlsOPne6vCtgkXjHGkvWqAuW6cFyDCMR4FvF/hc8TKrFVJnbQInFH2nd2+9SiYbZTW7nIi5e1AtPyQxRUglpiXfFz1JwJjOBBTPPQ81XdK3PSW1xeQK3ghR05lgjJ1x5isrCGi1icQg=="
           default-label: main
 
 encrypt:
   keystore:
     location: classpath:configserver.jks
-    password: md3v3l0p3r  # JKS Password, store it in some safe place or deploy the application in secure place
+    password: md3v3l0p3r
     alias: config

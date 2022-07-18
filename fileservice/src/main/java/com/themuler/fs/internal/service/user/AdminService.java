@@ -104,7 +104,6 @@ public class AdminService implements AdminInterface {
             .credentials(credentials)
             .encryptedFields(fieldsToEncrypt)
             .environment(clientConfiguration.getEnvironment())
-            .client(client)
             .build();
     ClientConfiguration savedConfig = this.clientConfigurationRepository.save(configuration);
     client.getClientConfigurations().add(savedConfig);
